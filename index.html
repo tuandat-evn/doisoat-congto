@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>⚡ Hệ Thống Đối Soát Công Tơ - PC Thường Tín</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.63.1/build/stlite.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #root { height: 100vh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script src="https://cdn.jsdelivr.net/npm/@stlite/mountable@0.63.1/build/stlite.js"></script>
+    <script>
+        stlite.mount(
+            {
+                // Nạp các thư viện thuần Python tương thích 100% với WebAssembly / iPhone
+                requirements: [
+                    "pandas",
+                    "openpyxl",
+                    "python-docx",
+                    "pdfminer.six",
+                    "Pillow"
+                ],
+                entrypoint: "boot.py",
+                files: {
+                    // File mồi cài đặt pdfplumber không dính lỗi C++ trên trình duyệt
+                    "boot.py": `
+import sys, types, micropip
+if "pypdfium2" not in sys.modules:
+    sys.modules["pypdfium2"] = types.ModuleType("pypdfium2")
+await micropip.install("pdfplumber", deps=False)
+with open("app.py", "r", encoding="utf-8") as f:
+    exec(f.read(), globals())
+`,
+                    "app.py": { url: "./app.py" },
+                    "core_elster.py": { url: "./core_elster.py" },
+                    "core_gelex.py": { url: "./core_gelex.py" },
+                    "core_dts27_xanh.py": { url: "./core_dts27_xanh.py" },
+                    "core_dts27_do.py": { url: "./core_dts27_do.py" },
+                    "core_psmart.py": { url: "./core_psmart.py" },
+                    "core_hhm.py": { url: "./core_hhm.py" },
+                    "core_vinasino.py": { url: "./core_vinasino.py" },
+                    "Mau_Bien_Ban.docx": { url: "./Mau_Bien_Ban.docx" }
+                }
+            },
+            document.getElementById("root")
+        );
+    </script>
+</body>
+</html>
