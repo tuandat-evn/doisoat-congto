@@ -2,9 +2,9 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>⚡ Hệ Thống Đối Soát Công Tơ (TT16 & TT60) - PC Thường Tín</title>
-    <!-- Thư viện lõi siêu nhẹ: PDF.js, SheetJS (Excel), PizZip (Word/ZIP), FileSaver -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>⚡ ĐỐI SOÁT LẬP TRÌNH CÔNG TƠ 3 GIÁ (TT16 & TT60) - PC THƯỜNG TÍN</title>
+    <!-- Thư viện xử lý PDF, Excel, Word/ZIP Offline 100% trên trình duyệt -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
@@ -12,173 +12,256 @@
     <style>
         :root {
             --evn-blue: #00338d;
-            --evn-blue-light: #005A9C;
+            --evn-blue-dark: #00266b;
             --evn-red: #d93025;
-            --evn-orange: #FF6600;
-            --bg-gray: #f3f6f9;
+            --bg-gray: #f1f5f9;
         }
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; padding: 0; background-color: var(--bg-gray); color: #1f2937; padding-bottom: 40px; }
-        
-        /* HEADER CHUẨN CẨM NANG EVNHANOI */
+        body { margin: 0; padding: 0; background-color: var(--bg-gray); color: #0f172a; }
+
+        /* BANNER CHÍNH CHUẨN MẪU ANH ĐẠT CHỌN */
         .top-header {
             background: linear-gradient(90deg, #00266b 0%, #004299 100%);
             color: white;
-            padding: 12px 16px;
+            padding: 10px 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18);
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 200;
         }
         .brand-box { display: flex; align-items: center; gap: 12px; }
         .evn-badge {
             background: white; color: var(--evn-blue); font-weight: 900; font-size: 12px;
-            padding: 6px 8px; border-radius: 6px; text-align: center; line-height: 1.1;
-            border-bottom: 3px solid var(--evn-red);
+            padding: 6px 9px; border-radius: 6px; text-align: center; line-height: 1.1;
+            border-bottom: 3px solid var(--evn-red); flex-shrink: 0;
         }
         .evn-badge span { color: var(--evn-red); display: block; font-size: 10px; }
         .title-group h1 { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; }
         .title-group p { margin: 2px 0 0 0; font-size: 12px; color: #93c5fd; }
         .signature-badge {
-            background: rgba(255,255,255,0.12); padding: 6px 12px; border-radius: 8px;
-            text-align: right; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.12); padding: 6px 14px; border-radius: 8px;
+            text-align: right; border: 1px solid rgba(255,255,255,0.25);
         }
-        .signature-badge .unit { font-weight: 800; font-size: 13px; color: #ffd700; }
-        .signature-badge .author { font-size: 10px; font-style: italic; color: #e5e7eb; }
+        .signature-badge .unit { font-weight: 800; font-size: 13px; color: #ffd700; letter-spacing: 0.4px; }
+        .signature-badge .author { font-size: 10.5px; font-style: italic; color: #e5e7eb; }
 
-        .container { max-width: 1380px; margin: 14px auto; padding: 0 12px; }
+        /* THANH CHUYỂN TAB 2 TRONG 1 */
+        .nav-tabs-bar {
+            background: #ffffff;
+            border-bottom: 2px solid #cbd5e1;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            position: sticky;
+            top: 58px;
+            z-index: 190;
+        }
+        .tab-buttons-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+        .main-tab-btn {
+            padding: 9px 18px;
+            border-radius: 8px;
+            border: 1.5px solid #cbd5e1;
+            background: #f8fafc;
+            color: #1e293b;
+            font-weight: 800;
+            font-size: 13.5px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        .main-tab-btn.active {
+            background: var(--evn-blue);
+            color: #ffffff;
+            border-color: var(--evn-blue);
+            box-shadow: 0 2px 6px rgba(0, 51, 141, 0.25);
+        }
+        .main-tab-btn.tab-camnang.active {
+            background: var(--evn-red);
+            border-color: var(--evn-red);
+            box-shadow: 0 2px 6px rgba(217, 48, 37, 0.25);
+        }
 
-        /* KHUNG ĐIỀU KHIỂN & UPLOAD */
+        /* CONTAINER RỘNG 100% MÀN HÌNH ĐỂ BẢNG 24 CỘT KHÔNG PHẢI KÉO NGANG TRÊN PC */
+        .container-full { width: 100%; max-width: 100%; margin: 10px auto; padding: 0 10px 40px 10px; }
+
         .card {
-            background: white; border-radius: 12px; padding: 16px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 14px;
-            border: 1px solid #e5e7eb;
+            background: white; border-radius: 10px; padding: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
         }
         .control-grid {
-            display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; margin-bottom: 14px;
+            display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: end; margin-bottom: 12px;
         }
-        label.field-label { display: block; font-size: 13px; font-weight: 700; color: var(--evn-blue); margin-bottom: 6px; }
+        label.field-label { display: block; font-size: 12.5px; font-weight: 700; color: var(--evn-blue); margin-bottom: 5px; }
         select.meter-select {
-            width: 100%; padding: 10px 12px; font-size: 14px; font-weight: 600;
+            width: 100%; padding: 9px 12px; font-size: 13.5px; font-weight: 700;
             border: 1.5px solid #cbd5e1; border-radius: 8px; background-color: #f8fafc; color: #0f172a;
         }
-        .btn-reset {
-            background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;
-            padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px;
-            cursor: pointer; white-space: nowrap; transition: 0.15s;
+        .btn-mode-toggle {
+            background-color: #eff6ff; color: #1d4ed8; border: 1.5px solid #93c5fd;
+            padding: 9px 14px; border-radius: 8px; font-weight: 700; font-size: 12.5px;
+            cursor: pointer; white-space: nowrap;
         }
-        .btn-reset:active { transform: scale(0.97); }
+        .btn-mode-toggle.active-dual {
+            background-color: #fef3c7; color: #b45309; border-color: #f59e0b;
+        }
+        .btn-reset {
+            background-color: #fee2e2; color: #b91c1c; border: 1.5px solid #fca5a5;
+            padding: 9px 14px; border-radius: 8px; font-weight: 700; font-size: 12.5px;
+            cursor: pointer; white-space: nowrap;
+        }
 
-        .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (max-width: 768px) {
-            .upload-grid { grid-template-columns: 1fr; }
+        .upload-grid-single { display: grid; grid-template-columns: 1.4fr 1fr; gap: 10px; }
+        .upload-grid-dual { display: none; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+        @media (max-width: 900px) {
             .control-grid { grid-template-columns: 1fr; }
+            .upload-grid-single, .upload-grid-dual { grid-template-columns: 1fr; }
             .signature-badge { display: none; }
         }
 
         .drop-zone {
             border: 2px dashed #3b82f6; background: #eff6ff; border-radius: 10px;
-            padding: 18px 12px; text-align: center; cursor: pointer; position: relative;
-            transition: all 0.2s;
+            padding: 14px 10px; text-align: center; cursor: pointer; position: relative;
+            transition: all 0.15s;
         }
         .drop-zone:hover { background: #dbeafe; }
+        .drop-zone.truoc-zone { border-color: #2563eb; background: #eff6ff; }
+        .drop-zone.sau-zone { border-color: #dc2626; background: #fef2f2; }
         .drop-zone.excel-zone { border-color: #10b981; background: #ecfdf5; }
-        .drop-zone.excel-zone:hover { background: #d1fae5; }
         .drop-zone input[type="file"] {
             position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
         }
-        .drop-title { font-weight: 700; font-size: 14px; color: #1e3a8a; margin-bottom: 4px; }
+        .drop-title { font-weight: 800; font-size: 13.5px; color: #1e3a8a; margin-bottom: 3px; }
+        .sau-zone .drop-title { color: #991b1b; }
         .excel-zone .drop-title { color: #065f46; }
-        .drop-sub { font-size: 12px; color: #64748b; }
+        .drop-sub { font-size: 11.5px; color: #475569; }
 
         /* THỐNG KÊ NHANH */
         .stats-bar {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px;
         }
         .stat-item {
-            background: white; padding: 10px 12px; border-radius: 10px; text-align: center;
-            border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            background: white; padding: 8px 12px; border-radius: 8px; text-align: center;
+            border: 1px solid #cbd5e1;
         }
-        .stat-num { font-size: 20px; font-weight: 800; }
-        .stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+        .stat-num { font-size: 19px; font-weight: 800; }
+        .stat-label { font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; }
 
         /* HỘP CẢNH BÁO RADAR QC */
         .qc-box {
-            background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 10px;
-            padding: 12px 14px; margin-bottom: 14px; display: none;
+            background: #fffbeb; border: 1.5px solid #f59e0b; border-radius: 8px;
+            padding: 10px 14px; margin-bottom: 10px; display: none;
         }
         .qc-header {
-            font-weight: 800; font-size: 13.5px; color: #b45309; cursor: pointer;
+            font-weight: 800; font-size: 13px; color: #b45309; cursor: pointer;
             display: flex; justify-content: space-between; align-items: center;
         }
-        .qc-list { margin: 8px 0 0 0; padding-left: 18px; font-size: 13px; color: #92400e; }
-        .qc-list li { margin-bottom: 5px; }
+        .qc-list { margin: 8px 0 0 0; padding-left: 18px; font-size: 12.5px; color: #92400e; }
+        .qc-list li { margin-bottom: 4px; line-height: 1.4; }
 
         /* NÚT XUẤT FILE */
         .export-bar {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;
         }
         .btn-action {
-            padding: 12px 14px; border-radius: 9px; font-weight: 700; font-size: 13.5px;
+            padding: 10px 14px; border-radius: 8px; font-weight: 700; font-size: 13px;
             border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
             color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .btn-word { background: linear-gradient(135deg, #1d4ed8, #1e40af); }
         .btn-excel { background: linear-gradient(135deg, #059669, #047857); }
-        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* BẢNG KẾT QUẢ CUỘN NGANG MƯỢT TRÊN ĐIỆN THOẠI */
+        /* BẢNG KẾT QUẢ 24 CỘT TỐI ƯU HIỂN THỊ VỪA KHÍT MÀN HÌNH PC */
         .table-wrap {
-            overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px;
-            border: 1px solid #cbd5e1; background: white;
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            border-radius: 8px; border: 1px solid #cbd5e1; background: white;
         }
         .custom-table {
-            width: 100%; border-collapse: collapse; font-size: 12.5px; white-space: nowrap;
+            width: 100%; border-collapse: collapse; font-size: 11.5px; table-layout: auto;
         }
         .custom-table th {
-            background-color: #f1f5f9; padding: 9px 8px; border: 1px solid #cbd5e1;
-            text-align: center; color: #1e3a8a; font-weight: 700; font-size: 11.5px;
+            background-color: #f1f5f9; padding: 6px 4px; border: 1px solid #cbd5e1;
+            text-align: center; color: #1e3a8a; font-weight: 800; font-size: 10.5px; line-height: 1.2;
         }
         .custom-table td {
-            padding: 7px 9px; border: 1px solid #e2e8f0; text-align: center; vertical-align: middle;
+            padding: 5px 4px; border: 1px solid #e2e8f0; text-align: center; vertical-align: middle;
+            white-space: nowrap;
+        }
+        /* Cho phép cột Tên file và Loại công tơ tự ngắt dòng gọn để không đẩy tràn bảng */
+        .custom-table td.col-filename {
+            white-space: normal; word-break: break-all; max-width: 150px; min-width: 105px;
+            text-align: left; color: #1976d2; font-weight: 600; font-size: 11px; line-height: 1.25;
+        }
+        .custom-table td.col-metername {
+            white-space: normal; max-width: 90px; font-weight: 700; font-size: 11px; line-height: 1.2;
+        }
+        .custom-table td.col-date {
+            white-space: normal; max-width: 82px; font-size: 10.5px; line-height: 1.2;
         }
         .tag-green {
-            background-color: #e6f4ea; color: #1e8e3e; padding: 2px 6px; border-radius: 6px;
-            display: inline-block; margin: 1px 0; font-size: 11px; border: 1px solid #ceead6; font-weight: 600;
+            background-color: #e6f4ea; color: #1e8e3e; padding: 1.5px 4px; border-radius: 4px;
+            display: inline-block; margin: 1px 0; font-size: 10px; border: 1px solid #ceead6; font-weight: 700;
         }
         .tag-red {
-            background-color: #fce8e6; color: #d93025; padding: 2px 6px; border-radius: 6px;
-            display: inline-block; margin: 1px 0; font-size: 11px; border: 1px solid #fad2cf; font-weight: 600;
+            background-color: #fce8e6; color: #d93025; padding: 1.5px 4px; border-radius: 4px;
+            display: inline-block; margin: 1px 0; font-size: 10px; border: 1px solid #fad2cf; font-weight: 700;
         }
         .badge-green {
-            background-color: #1e8e3e; color: white; padding: 5px 10px; border-radius: 5px;
-            font-weight: 700; font-size: 11px; display: inline-block;
+            background-color: #1e8e3e; color: white; padding: 4px 7px; border-radius: 4px;
+            font-weight: 700; font-size: 10.5px; display: inline-block;
         }
         .badge-red {
-            background-color: #d93025; color: white; padding: 5px 10px; border-radius: 5px;
-            font-weight: 700; font-size: 11px; display: inline-block;
+            background-color: #d93025; color: white; padding: 4px 7px; border-radius: 4px;
+            font-weight: 700; font-size: 10.5px; display: inline-block;
         }
         .col-so { font-weight: 700; color: #0d47a1; }
         .col-nhan { font-weight: 700; color: #d84315; }
+        /* Cảnh báo nổi bật khi B1=B2=B3=0 */
+        .zero-tariff-cell {
+            background-color: #fef3c7 !important;
+            color: #dc2626 !important;
+            border: 1.5px solid #f59e0b !important;
+            font-weight: 900 !important;
+        }
         .stage-sau { background-color: #fee2e2; color: #dc2626; font-weight: 800; }
         .stage-truoc { font-weight: 700; color: #334155; }
 
         .status-banner {
-            padding: 11px 14px; border-radius: 8px; font-weight: 700; font-size: 13.5px; margin-bottom: 12px;
+            padding: 9px 14px; border-radius: 8px; font-weight: 700; font-size: 13px; margin-bottom: 10px;
         }
         .status-ok { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
         .status-err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
         .status-wait { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+
+        /* KHUNG HIỂN THỊ TAB 2: CẨM NANG XỬ LÝ LỖI */
+        #tabCamNangSection {
+            display: none;
+            width: 100%;
+            height: calc(100vh - 112px);
+            border: none;
+        }
+        #camNangFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #f1f5f9;
+        }
     </style>
 </head>
 <body>
 
-    <!-- HEADER CHUẨN PHONG CÁCH CẨM NANG -->
+    <!-- BANNER CHÍNH GIỮ NGUYÊN MẪU CỦA ANH ĐẠT -->
     <header class="top-header">
         <div class="brand-box">
             <div class="evn-badge">EVN<span>HANOI</span></div>
@@ -193,14 +276,31 @@
         </div>
     </header>
 
-    <div class="container">
-        <!-- BỘ ĐIỀU KHIỂN & KÉO THẢ FILE -->
+    <!-- THANH CHUYỂN TAB 2 TRONG 1 -->
+    <div class="nav-tabs-bar">
+        <div class="tab-buttons-wrap">
+            <button id="btnTabDoiSoat" class="main-tab-btn active" onclick="switchMainTab('DOISOAT')">
+                ⚡ Tab 1: Đối Soát & Xuất Biên Bản (TT16 & TT60)
+            </button>
+            <button id="btnTabCamNang" class="main-tab-btn tab-camnang" onclick="switchMainTab('CAMNANG')">
+                📖 Tab 2: Cẩm Nang Xử Lý Lỗi Công Tơ (35 Mục & 45 Ảnh)
+            </button>
+        </div>
+        <div style="font-size: 12px; font-weight: 700; color: #475569;">
+            📞 Hỗ trợ kỹ thuật X5: <a href="tel:0985325681" style="color: #16a34a; text-decoration: none;">098 5325681</a>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: HỆ THỐNG ĐỐI SOÁT & XUẤT BIÊN BẢN (MẶC ĐỊNH MỞ LÀM MÀN HÌNH CHÍNH) -->
+    <!-- ========================================================================= -->
+    <div id="tabDoiSoatSection" class="container-full">
         <div class="card">
             <div class="control-grid">
                 <div>
-                    <label class="field-label">📍 Chọn chủng loại công tơ (Hoặc để Tự động nhận diện):</label>
+                    <label class="field-label">📍 Chọn chủng loại công tơ (Hoặc để Tự động nhận diện thông minh):</label>
                     <select id="loaiCongTo" class="meter-select">
-                        <option value="AUTO">[ ⚡ Tự động nhận diện thông minh ]</option>
+                        <option value="AUTO">[ ⚡ Tự động nhận diện thông minh tất cả công tơ ]</option>
                         <option value="ELSTER">Công tơ ELSTER A1700</option>
                         <option value="GELEX">Công tơ GELEX ME</option>
                         <option value="DTS27_DO">Công tơ DTS27 ĐỎ</option>
@@ -210,19 +310,42 @@
                         <option value="VINASINO">Công tơ VINASINO</option>
                     </select>
                 </div>
+                <button id="btnToggleUploadMode" class="btn-mode-toggle" onclick="toggleUploadMode()">
+                    📂 Chế độ nạp: 1 Ô Tự Động (Bấm để tách 2 ô Trước/Sau)
+                </button>
                 <button class="btn-reset" onclick="resetAll()">🗑️ Xóa toàn bộ file</button>
             </div>
 
-            <div class="upload-grid">
+            <!-- CHẾ ĐỘ 1: 1 Ô KÉO THẢ CHUNG TỰ ĐỘNG (MẶC ĐỊNH) -->
+            <div id="singleUploadGrid" class="upload-grid-single">
                 <div class="drop-zone">
-                    <input type="file" id="pdfInput" multiple accept=".pdf" />
-                    <div class="drop-title">📥 Chạm hoặc Kéo thả file PDF (Trước/Sau)</div>
-                    <div class="drop-sub" id="pdfStatusText">Hỗ trợ chọn hàng loạt trên cả iPhone, Android & PC</div>
+                    <input type="file" id="pdfInputAll" multiple accept=".pdf" />
+                    <div class="drop-title">📥 Kéo thả toàn bộ file PDF (Trước & Sau cài đặt) vào đây</div>
+                    <div class="drop-sub" id="pdfStatusText">Tự động gom theo Serial, nhận diện SL LP & tên file (truoc/sau, đuôi L1)</div>
                 </div>
                 <div class="drop-zone excel-zone">
                     <input type="file" id="excelInput" accept=".xlsx,.xls" />
-                    <div class="drop-title">📊 Tải Excel Khách hàng CMIS (Tùy chọn)</div>
-                    <div class="drop-sub" id="excelStatusText">Tự động VLOOKUP điền Biên bản theo SERIAL</div>
+                    <div class="drop-title">📊 Tải Excel Khách hàng CMIS (Tùy chọn điền Biên bản)</div>
+                    <div class="drop-sub" id="excelStatusText">Tự động VLOOKUP thông tin khách hàng theo SERIAL</div>
+                </div>
+            </div>
+
+            <!-- CHẾ ĐỘ 2: TÁCH RIÊNG 2 Ô TRƯỚC VÀ SAU CÀI ĐẶT -->
+            <div id="dualUploadGrid" class="upload-grid-dual">
+                <div class="drop-zone truoc-zone">
+                    <input type="file" id="pdfInputTruoc" multiple accept=".pdf" />
+                    <div class="drop-title">📥 Ô 1: Kéo thả File TRƯỚC CÀI ĐẶT (Chuẩn TT16)</div>
+                    <div class="drop-sub" id="pdfTruocStatusText">Khóa cứng giai đoạn TRƯỚC (So sánh với TT16)</div>
+                </div>
+                <div class="drop-zone sau-zone">
+                    <input type="file" id="pdfInputSau" multiple accept=".pdf" />
+                    <div class="drop-title">📥 Ô 2: Kéo thả File SAU CÀI ĐẶT (Chuẩn TT60)</div>
+                    <div class="drop-sub" id="pdfSauStatusText">Khóa cứng giai đoạn SAU (So sánh với TT60)</div>
+                </div>
+                <div class="drop-zone excel-zone">
+                    <input type="file" id="excelInputDual" accept=".xlsx,.xls" />
+                    <div class="drop-title">📊 Tải Excel Khách hàng CMIS</div>
+                    <div class="drop-sub" id="excelDualStatusText">Tự động VLOOKUP theo SERIAL</div>
                 </div>
             </div>
         </div>
@@ -236,21 +359,21 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-num" id="statPass" style="color: #16a34a;">0</div>
-                    <div class="stat-label">Đạt Chuẩn</div>
+                    <div class="stat-label">Đạt Chuẩn Khung Giờ</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-num" id="statFail" style="color: #dc2626;">0</div>
-                    <div class="stat-label">Sai / Lỗi</div>
+                    <div class="stat-label">Sai Giờ / Cần Rà Soát</div>
                 </div>
             </div>
 
             <div id="statusBanner" class="status-banner"></div>
 
-            <!-- RADAR QC -->
+            <!-- HỘP CẢNH BÁO RADAR QC (BAO GỒM CẢNH BÁO B1=B2=B3=0) -->
             <div id="qcBox" class="qc-box">
                 <div class="qc-header" onclick="toggleQC()">
-                    <span id="qcTitle">🚨 TỔNG HỢP QC: Phát hiện điểm bất thường</span>
-                    <span>▼ Xem chi tiết</span>
+                    <span id="qcTitle">🚨 TỔNG HỢP QC: Phát hiện điểm bất thường cần kiểm tra</span>
+                    <span>▼ Ẩn/Hiện chi tiết</span>
                 </div>
                 <ul id="qcList" class="qc-list"></ul>
             </div>
@@ -258,37 +381,37 @@
             <!-- NÚT XUẤT BIÊN BẢN WORD & EXCEL -->
             <div class="export-bar">
                 <button id="btnWord" class="btn-action btn-word" onclick="xuatWordHangLoat()">
-                    📦 Xuất Biên Bản Word / ZIP (QĐ 963)
+                    📦 Xuất Biên Bản Word / ZIP (Mẫu QĐ 963)
                 </button>
                 <button id="btnExcel" class="btn-action btn-excel" onclick="xuatExcelTongHop()">
                     📊 Xuất Báo Cáo Excel Tổng Hợp
                 </button>
             </div>
 
-            <!-- BẢNG ĐỐI SOÁT CHI TIẾT -->
+            <!-- BẢNG ĐỐI SOÁT 24 CỘT -->
             <div class="table-wrap">
                 <table class="custom-table">
                     <thead>
                         <tr>
                             <th rowspan="2">#</th>
-                            <th rowspan="2">GIAI ĐOẠN</th>
+                            <th rowspan="2">GIAI<br>ĐOẠN</th>
                             <th rowspan="2">TÊN FILE</th>
                             <th rowspan="2">SERIAL</th>
-                            <th rowspan="2">LOẠI CÔNG TƠ</th>
+                            <th rowspan="2">LOẠI<br>CÔNG TƠ</th>
                             <th colspan="3">THÔNG TIN LẬP TRÌNH</th>
                             <th colspan="4">P GIAO (kWh)</th>
                             <th colspan="4">P NHẬN (kWh)</th>
                             <th colspan="2">VÔ CÔNG (kVArh)</th>
-                            <th colspan="3">THỨ 2 -> THỨ 7</th>
-                            <th colspan="2">CHỦ NHẬT</th>
-                            <th rowspan="2">KẾT QUẢ ĐỐI SOÁT</th>
+                            <th colspan="3">THỨ 2 -> THỨ 7 (DT1)</th>
+                            <th colspan="2">CHỦ NHẬT (DT2)</th>
+                            <th rowspan="2">KẾT QUẢ<br>ĐỐI SOÁT</th>
                         </tr>
                         <tr>
                             <th>SL LP</th><th>NGÀY GẦN NHẤT</th><th>TU/TI</th>
                             <th>TỔNG</th><th>B1</th><th>B2</th><th>B3</th>
                             <th>TỔNG</th><th>B1</th><th>B2</th><th>B3</th>
                             <th>Q GIAO</th><th>Q NHẬN</th>
-                            <th>T3</th><th>T1</th><th>T2</th><th>T3</th><th>T1</th>
+                            <th>T3 (TĐ)</th><th>T1 (BT)</th><th>T2 (CĐ)</th><th>T3 (TĐ)</th><th>T1 (BT)</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody"></tbody>
@@ -297,15 +420,25 @@
         </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- TAB 2: CẨM NANG XỬ LÝ LỖI CÔNG TƠ 3 GIÁ (TT60)                            -->
+    <!-- ========================================================================= -->
+    <div id="tabCamNangSection">
+        <iframe id="camNangFrame" src="./camnang.html" title="Cẩm Nang Xử Lý Lỗi Công Tơ 3 Giá (TT60)"></iframe>
+    </div>
+
 <script>
-// Cấu hình Worker cho PDF.js
+// Cấu hình PDF.js Worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let cachedPdfFiles = [];
+let isDualUploadMode = false;
+let cachedAllFiles = [];
+let cachedTruocFiles = [];
+let cachedSauFiles = [];
 let dictExcelCMIS = {};
 let banGhiHoanThien = [];
 
-// Chuẩn khung giờ TT16 và TT60
+// CHUẨN KHUNG GIỜ BIỂU GIÁ THÔNG TƯ 16 & THÔNG TƯ 60
 const TT16_T1 = ['04:00-09:30', '11:30-17:00', '20:00-22:00'];
 const TT16_T2 = ['09:30-11:30', '17:00-20:00'];
 const TT16_T3 = ['00:00-04:00', '22:00-24:00'];
@@ -318,49 +451,106 @@ const TT60_T3 = ['00:00-06:00'];
 const TT60_CN_T1 = ['06:00-24:00'];
 const TT60_CN_T3 = ['00:00-06:00'];
 
+// CHUYỂN TAB 1 VÀ TAB 2
+function switchMainTab(tabName) {
+    const secDoiSoat = document.getElementById('tabDoiSoatSection');
+    const secCamNang = document.getElementById('tabCamNangSection');
+    const btnDoiSoat = document.getElementById('btnTabDoiSoat');
+    const btnCamNang = document.getElementById('btnTabCamNang');
+
+    if (tabName === 'DOISOAT') {
+        secDoiSoat.style.display = 'block';
+        secCamNang.style.display = 'none';
+        btnDoiSoat.classList.add('active');
+        btnCamNang.classList.remove('active');
+    } else {
+        secDoiSoat.style.display = 'none';
+        secCamNang.style.display = 'block';
+        btnDoiSoat.classList.remove('active');
+        btnCamNang.classList.add('active');
+    }
+}
+
+// CHUYỂN CHẾ ĐỘ NẠP FILE: 1 Ô CHUNG <-> 2 Ô RIÊNG (TRƯỚC/SAU)
+function toggleUploadMode() {
+    isDualUploadMode = !isDualUploadMode;
+    const singleGrid = document.getElementById('singleUploadGrid');
+    const dualGrid = document.getElementById('dualUploadGrid');
+    const btn = document.getElementById('btnToggleUploadMode');
+
+    if (isDualUploadMode) {
+        singleGrid.style.display = 'none';
+        dualGrid.style.display = 'grid';
+        btn.classList.add('active-dual');
+        btn.innerText = '📂 Chế độ nạp: Tách 2 Ô Trước/Sau (Bấm để về 1 ô chung)';
+    } else {
+        singleGrid.style.display = 'grid';
+        dualGrid.style.display = 'none';
+        btn.classList.remove('active-dual');
+        btn.innerText = '📂 Chế độ nạp: 1 Ô Tự Động (Bấm để tách 2 ô Trước/Sau)';
+    }
+}
+
 function arrEqual(a, b) {
     if (!a || !b || a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
     return true;
 }
 
-// Đọc văn bản từ PDF giữ nguyên thứ tự dòng như pdfplumber
+// HÀM GHÉP DÒNG THEO TỌA ĐỘ Y
+function groupItemsToLines(items, yTolerance = 4.5) {
+    if (!items || !items.length) return "";
+    let sorted = [...items].sort((a, b) => {
+        if (Math.abs(b.y - a.y) > yTolerance) return b.y - a.y;
+        return a.x - b.x;
+    });
+    let lines = [];
+    let curLine = [];
+    let lastY = null;
+    for (let it of sorted) {
+        if (lastY !== null && Math.abs(it.y - lastY) > yTolerance) {
+            lines.push(curLine.join(" "));
+            curLine = [];
+        }
+        curLine.push(it.str);
+        lastY = it.y;
+    }
+    if (curLine.length) lines.push(curLine.join(" "));
+    return lines.join("\n");
+}
+
+// ĐỌC VĂN BẢN TỪ PDF: TRẢ VỀ CẢ BẢN GHÉP NGANG VÀ BẢN TÁCH 2 CỘT (CHUYÊN TRỊ ELSTER A1700)
 async function extractTextFromPDF(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = "";
+    let fullTextStandard = "";
+    let fullTextTwoCol = "";
+
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const midX = viewport.width / 2.0;
         const content = await page.getTextContent();
+
         let items = content.items.map(it => ({
             str: it.str,
             x: it.transform[4],
             y: it.transform[5]
-        }));
-        // Sắp xếp từ trên xuống dưới (y giảm dần), từ trái qua phải (x tăng dần)
-        items.sort((a, b) => {
-            if (Math.abs(b.y - a.y) > 4) return b.y - a.y;
-            return a.x - b.x;
-        });
-        let lines = [];
-        let curLine = [];
-        let lastY = null;
-        for (let it of items) {
-            if (lastY !== null && Math.abs(it.y - lastY) > 4) {
-                lines.push(curLine.join(" "));
-                curLine = [];
-            }
-            curLine.push(it.str);
-            lastY = it.y;
-        }
-        if (curLine.length) lines.push(curLine.join(" "));
-        fullText += lines.join("\n") + "\n";
+        })).filter(it => it.str && it.str.trim() !== "");
+
+        // 1. Bản ghép dòng tiêu chuẩn
+        fullTextStandard += groupItemsToLines(items, 4.2) + "\n";
+
+        // 2. Bản tách cột Trái / Phải (Giúp Day Definitions của Elster A1700 không bị trộn ngang 2 cột)
+        let leftItems = items.filter(it => it.x < midX - 5);
+        let rightItems = items.filter(it => it.x >= midX - 5);
+        fullTextTwoCol += groupItemsToLines(leftItems, 4.5) + "\n" + groupItemsToLines(rightItems, 4.5) + "\n";
     }
-    return fullText;
+    return { standard: fullTextStandard, twoCol: fullTextTwoCol };
 }
 
 // =========================================================================
-// 1. LÕI ELSTER A1700 (Chuyển ngữ 1:1 từ core_elster.py)
+// 1. LÕI ELSTER A1700 (ĐÃ SỬA TRIỆT ĐỂ ĐỌC 2 CỘT DAY DEFINITIONS & CHỈ SỐ B1-B3)
 // =========================================================================
 function xuLyChiSoElster(textSo) {
     if (!textSo) return 0;
@@ -377,11 +567,11 @@ function xuLyChiSoElster(textSo) {
 }
 
 function phanTichKhungGioElster(textDay) {
-    const regex = /(\d{2}:\d{2})\s+(Rate\d)/g;
+    const regex = /(\d{2}:\d{2})\s+(Rate\s*[123])/gi;
     let mocGio = [];
     let m;
     while ((m = regex.exec(textDay)) !== null) {
-        mocGio.push([m[1], m[2]]);
+        mocGio.push([m[1], m[2].replace(/\s+/g, '')]);
     }
     if (!mocGio.length) return { T1: [], T2: [], T3: [] };
     let ketQua = { T1: [], T2: [], T3: [] };
@@ -395,7 +585,9 @@ function phanTichKhungGioElster(textDay) {
         let startTime = mocGio[i][0];
         let loaiBieu = mapping[mocGio[i][1]];
         let endTime = (i < mocGio.length - 1) ? mocGio[i + 1][0] : "24:00";
-        if (loaiBieu) ketQua[loaiBieu].push(`${startTime}-${endTime}`);
+        if (loaiBieu && startTime !== endTime) {
+            ketQua[loaiBieu].push(`${startTime}-${endTime}`);
+        }
     }
     return ketQua;
 }
@@ -411,60 +603,112 @@ function vietHoaNgayThangElster(chuoiGoc) {
     if (ampm === 'AM' && hr === 12) hr = 0;
     let day = p1 > 12 ? p1 : p2;
     let month = p1 > 12 ? p2 : p1;
-    // Giữ logic ưu tiên Tháng/Ngày/Năm của Elster nếu cả 2 <= 12
     if (p1 <= 12 && p2 <= 12) { month = p1; day = p2; }
     return `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${yr} ${String(hr).padStart(2,'0')}:${mn}`;
 }
 
-function xuLyFileElster(text) {
-    let serialM = text.match(/New serial number\s+[\-]*(\d+)/i);
+function xuLyFileElster(pdfObj, fileName = "") {
+    // Kết hợp cả bản標準 và bản tách 2 cột để không sót bất kỳ trường nào
+    const textStd = pdfObj.standard;
+    const textCol = pdfObj.twoCol;
+    const combined = textStd + "\n" + textCol;
+
+    let serialM = combined.match(/New serial number\s*[\-:]*\s*(\d+)/i) || combined.match(/Serial number\s*[\-:]*\s*(\d{7,12})/i);
     let serial = serialM ? serialM[1] : "N/A";
-    let tenM = text.match(/(A1700)/i);
-    let tenCongTo = tenM ? "ELSTER " + tenM[1].toUpperCase() : "ELSTER";
-    let tuM = text.match(/VT\s+[\d\.]+\s+[\d\.]+\s+=\s+([\d\.]+)/);
-    let tiM = text.match(/CT\s+[\d\.]+\s+[\d\.]+\s+=\s+([\d\.]+)/);
-    let progM = text.match(/Count\s+TimeStamp[\s\S]*?\n\s*(\d+)\s+([\d/]+\s+[\d:]+(?:\s+[a-zA-Z]+)?)/i);
+    // Dự phòng nếu PDF bị mất chữ New serial number thì lấy 8 số cuối của mã điểm đo trên tên file
+    if (serial === "N/A" && fileName) {
+        let fnMatch = fileName.match(/\d{7}(\d{8})/);
+        if (fnMatch) serial = fnMatch[1];
+    }
+
+    let tenM = combined.match(/(A1700)/i);
+    let tenCongTo = tenM ? "ELSTER " + tenM[1].toUpperCase() : "ELSTER A1700";
+    let tuM = combined.match(/VT\s+[\d\.,]+\s+[\d\.,]+\s*=\s*([\d\.,]+)/i);
+    let tiM = combined.match(/CT\s+[\d\.,]+\s+[\d\.,]+\s*=\s*([\d\.,]+)/i);
+    let progM = combined.match(/Count\s+TimeStamp[\s\S]*?\n\s*(\d+)\s+([\d/]+\s+[\d:]+(?:\s+[a-zA-Z]+)?)/i);
     let soLan = progM ? parseInt(progM[1], 10) : 0;
     let ngayLapTrinh = progM ? vietHoaNgayThangElster(progM[2]) : "N/A";
 
-    let idxCur = text.indexOf("Current Values");
-    let txtCs = idxCur !== -1 ? text.slice(idxCur) : text;
+    // Quét chỉ số P, Q trên cả bản tiêu chuẩn và bản tách cột
+    let idxCurStd = textStd.indexOf("Current Values");
+    let idxCurCol = textCol.indexOf("Current Values");
+    let txtCs = (idxCurStd !== -1 ? textStd.slice(idxCurStd) : textStd) + "\n" +
+                (idxCurCol !== -1 ? textCol.slice(idxCurCol) : textCol);
 
-    const getVal = (reg) => { let m = txtCs.match(reg); return m ? xuLyChiSoElster(m[1]) : 0; };
-    let dayBlocks = [];
-    let dbReg = /Day Number \d+\s*Switching time Active rate\(s\)\s*([\s\S]*?)(?=Day Number \d+|Tariff Checksum|Meter Constants|$)/gi;
-    let dm;
-    while ((dm = dbReg.exec(text)) !== null) dayBlocks.push(dm[1]);
+    const getVal = (reg) => {
+        let m = txtCs.match(reg);
+        return m ? xuLyChiSoElster(m[1]) : 0;
+    };
+
+    // Tìm các khối Day Number có định nghĩa Rate1/2/3 trên cả bản 2 cột và bản chuẩn
+    function extractValidDayBlocks(sourceText) {
+        let blocks = [];
+        let dbReg = /Day Number\s*(\d+)\s*Switching time\s*Active rate\(s\)([\s\S]*?)(?=Day Number\s*\d+|Tariff Checksum|Meter Constants|Season Definitions|Exclusion|Current Values|$)/gi;
+        let dm;
+        while ((dm = dbReg.exec(sourceText)) !== null) {
+            let dayNum = parseInt(dm[1], 10);
+            let parsed = phanTichKhungGioElster(dm[2]);
+            if (parsed.T1.length > 0 || parsed.T2.length > 0 || parsed.T3.length > 0) {
+                blocks.push({ dayNum, parsed });
+            }
+        }
+        // Sắp xếp theo thứ tự Day Number tăng dần (VD: Day 3 -> Day 4 hoặc Day 5 -> Day 6)
+        blocks.sort((a, b) => a.dayNum - b.dayNum);
+        return blocks;
+    }
+
+    let validDays = extractValidDayBlocks(textCol);
+    if (validDays.length < 2) {
+        let fallbackDays = extractValidDayBlocks(textStd);
+        if (fallbackDays.length > validDays.length) validDays = fallbackDays;
+    }
 
     let thucTeNt = { T1: [], T2: [], T3: [] }, thucTeCn = { T1: [], T2: [], T3: [] };
     let isTt60 = false, isTt16 = false;
-    if (dayBlocks.length >= 2) {
-        thucTeNt = phanTichKhungGioElster(dayBlocks[0]);
-        thucTeCn = phanTichKhungGioElster(dayBlocks[1]);
+
+    if (validDays.length >= 2) {
+        // Nếu có nhiều cặp Day Number, kiểm tra cặp khớp TT60 hoặc TT16, mặc định lấy 2 Day Number đang active
+        thucTeNt = validDays[0].parsed;
+        thucTeCn = validDays[1].parsed;
+        for (let i = 0; i < validDays.length - 1; i++) {
+            let candNt = validDays[i].parsed;
+            let candCn = validDays[i + 1].parsed;
+            let match60 = arrEqual(candNt.T1, TT60_T1) && arrEqual(candNt.T2, TT60_T2) && arrEqual(candNt.T3, TT60_T3) &&
+                          arrEqual(candCn.T1, TT60_CN_T1) && arrEqual(candCn.T2, []) && arrEqual(candCn.T3, TT60_CN_T3);
+            let match16 = arrEqual(candNt.T1, TT16_T1) && arrEqual(candNt.T2, TT16_T2) && arrEqual(candNt.T3, TT16_T3) &&
+                          arrEqual(candCn.T1, TT16_CN_T1) && arrEqual(candCn.T2, []) && arrEqual(candCn.T3, TT16_CN_T3);
+            if (match60 || match16) {
+                thucTeNt = candNt;
+                thucTeCn = candCn;
+                break;
+            }
+        }
         isTt60 = arrEqual(thucTeNt.T1, TT60_T1) && arrEqual(thucTeNt.T2, TT60_T2) && arrEqual(thucTeNt.T3, TT60_T3) &&
                  arrEqual(thucTeCn.T1, TT60_CN_T1) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, TT60_CN_T3);
         isTt16 = arrEqual(thucTeNt.T1, TT16_T1) && arrEqual(thucTeNt.T2, TT16_T2) && arrEqual(thucTeNt.T3, TT16_T3) &&
                  arrEqual(thucTeCn.T1, TT16_CN_T1) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, TT16_CN_T3);
     }
+
     return {
-        ten_cong_to: tenCongTo, serial, tu: tuM ? tuM[1] : "1.0", ti: tiM ? tiM[1] : "1.0",
+        ten_cong_to: tenCongTo, serial,
+        tu: tuM ? tuM[1] : "1.0", ti: tiM ? tiM[1] : "1.0",
         lan_cai_dat: soLan, ngay_lap_trinh: ngayLapTrinh,
-        p_giao: getVal(/([\d\,\.]+)\s+Import Wh/i),
-        b1_giao: getVal(/1\s+([\d\,\.]+)\s+Import Wh/i),
-        b2_giao: getVal(/2\s+([\d\,\.]+)\s+Import Wh/i),
-        b3_giao: getVal(/3\s+([\d\,\.]+)\s+Import Wh/i),
-        p_nhan: getVal(/([\d\,\.]+)\s+Export Wh/i),
-        b1_nhan: getVal(/4\s+([\d\,\.]+)\s+Export Wh/i),
-        b2_nhan: getVal(/5\s+([\d\,\.]+)\s+Export Wh/i),
-        b3_nhan: getVal(/6\s+([\d\,\.]+)\s+Export Wh/i),
-        q_giao: getVal(/([\d\,\.]+)\s+CD 1/i),
-        q_nhan: getVal(/([\d\,\.]+)\s+CD 2/i),
+        p_giao: getVal(/(?:Cumulative\s+|Total\s+)?([\d\,\.]+)\s+Import\s+Wh/i),
+        b1_giao: getVal(/(?:Rate\s*)?1\s+([\d\,\.]+)\s+Import\s+Wh/i),
+        b2_giao: getVal(/(?:Rate\s*)?2\s+([\d\,\.]+)\s+Import\s+Wh/i),
+        b3_giao: getVal(/(?:Rate\s*)?3\s+([\d\,\.]+)\s+Import\s+Wh/i),
+        p_nhan: getVal(/(?:Cumulative\s+|Total\s+)?([\d\,\.]+)\s+Export\s+Wh/i),
+        b1_nhan: getVal(/(?:Rate\s*)?4\s+([\d\,\.]+)\s+Export\s+Wh/i),
+        b2_nhan: getVal(/(?:Rate\s*)?5\s+([\d\,\.]+)\s+Export\s+Wh/i),
+        b3_nhan: getVal(/(?:Rate\s*)?6\s+([\d\,\.]+)\s+Export\s+Wh/i),
+        q_giao: getVal(/([\d\,\.]+)\s+CD\s*1/i),
+        q_nhan: getVal(/([\d\,\.]+)\s+CD\s*2/i),
         is_tt60: isTt60, is_tt16: isTt16, thuc_te_nt: thucTeNt, thuc_te_cn: thucTeCn
     };
 }
 
 // =========================================================================
-// 2. LÕI GELEX ME (Chuyển ngữ 1:1 từ core_gelex.py)
+// 2. LÕI GELEX ME
 // =========================================================================
 function phanTichKhungGioGelex(textDay) {
     let ketQua = { T1: [], T2: [], T3: [] };
@@ -517,7 +761,7 @@ function xuLyFileGelex(text) {
 }
 
 // =========================================================================
-// 3 & 4. LÕI DTS27 ĐỎ & DTS27 XANH (Chuyển ngữ 1:1 từ core_dts27_do/xanh.py)
+// 3 & 4. LÕI DTS27 ĐỎ & DTS27 XANH
 // =========================================================================
 function phanTichKhungGioDTS(matches, targetDay) {
     let dayMatches = matches.filter(m => m[0] === targetDay).sort((a, b) => a[1].localeCompare(b[1]));
@@ -607,7 +851,7 @@ function xuLyFileDts27Xanh(text) {
 }
 
 // =========================================================================
-// 5. LÕI PSMART (Chuyển ngữ 1:1 từ core_psmart.py)
+// 5. LÕI PSMART
 // =========================================================================
 function xuLyFilePsmart(text) {
     let clean = text.replace(/"/g, '');
@@ -653,7 +897,7 @@ function xuLyFilePsmart(text) {
 }
 
 // =========================================================================
-// 6. LÕI HHM (Chuyển ngữ 1:1 từ core_hhm.py)
+// 6. LÕI HHM
 // =========================================================================
 function xuLyFileHhm(text) {
     let clean = text.replace(/"/g, '');
@@ -716,7 +960,7 @@ function xuLyFileHhm(text) {
 }
 
 // =========================================================================
-// 7. LÕI VINASINO (Chuyển ngữ 1:1 từ core_vinasino.py)
+// 7. LÕI VINASINO
 // =========================================================================
 function phanTichKhungGioVinasino(block) {
     let res = { T1: [], T2: [], T3: [] };
@@ -775,21 +1019,46 @@ function xuLyFileVinasino(text) {
 }
 
 // =========================================================================
-// ĐIỀU PHỐI CHÍNH & VẼ BẢNG + RADAR QC
+// NHẬN DIỆN TÊN FILE (TRUOC / SAU / ĐUÔI L1)
 // =========================================================================
-document.getElementById('pdfInput').addEventListener('change', async (e) => {
-    cachedPdfFiles = Array.from(e.target.files);
-    if (cachedPdfFiles.length > 0) {
-        document.getElementById('pdfStatusText').innerHTML = `✅ Đã nạp <b>${cachedPdfFiles.length} file PDF</b>`;
+function detectStageHintFromFilename(fileName) {
+    let base = fileName.replace(/\.pdf$/i, '').trim().toLowerCase();
+    if (/(truoc|trước|trc)/i.test(base)) return "TRƯỚC";
+    if (/(sau)/i.test(base)) return "SAU";
+    // Quy ước đuôi L1 (VD: 772201313055754_061126L1) là file Trước cài
+    if (/l1$/i.test(base) || /_l1\b/i.test(base)) return "TRƯỚC";
+    if (/l2$/i.test(base) || /_l2\b/i.test(base)) return "SAU";
+    return null;
+}
+
+// =========================================================================
+// SỰ KIỆN TẢI FILE & ĐIỀU PHỐI CHÍNH
+// =========================================================================
+document.getElementById('pdfInputAll').addEventListener('change', async (e) => {
+    cachedAllFiles = Array.from(e.target.files);
+    if (cachedAllFiles.length > 0) {
+        document.getElementById('pdfStatusText').innerHTML = `✅ Đã nạp <b>${cachedAllFiles.length} file PDF</b>`;
         await runFullProcess();
     }
 });
 
-document.getElementById('loaiCongTo').addEventListener('change', async () => {
-    if (cachedPdfFiles.length > 0) await runFullProcess();
+document.getElementById('pdfInputTruoc').addEventListener('change', async (e) => {
+    cachedTruocFiles = Array.from(e.target.files);
+    document.getElementById('pdfTruocStatusText').innerHTML = `✅ Đã nạp <b>${cachedTruocFiles.length} file TRƯỚC</b>`;
+    await runFullProcess();
 });
 
-document.getElementById('excelInput').addEventListener('change', async (e) => {
+document.getElementById('pdfInputSau').addEventListener('change', async (e) => {
+    cachedSauFiles = Array.from(e.target.files);
+    document.getElementById('pdfSauStatusText').innerHTML = `✅ Đã nạp <b>${cachedSauFiles.length} file SAU</b>`;
+    await runFullProcess();
+});
+
+document.getElementById('loaiCongTo').addEventListener('change', async () => {
+    await runFullProcess();
+});
+
+async function handleExcelUpload(e, statusId) {
     const file = e.target.files[0];
     if (!file) return;
     const data = await file.arrayBuffer();
@@ -803,9 +1072,12 @@ document.getElementById('excelInput').addEventListener('change', async (e) => {
             dictExcelCMIS[sKey] = r;
         }
     });
-    document.getElementById('excelStatusText').innerHTML = `✅ Đã đồng bộ <b>${Object.keys(dictExcelCMIS).length} khách hàng</b> từ Excel`;
-    if (cachedPdfFiles.length > 0) await runFullProcess();
-});
+    document.getElementById(statusId).innerHTML = `✅ Đã đồng bộ <b>${Object.keys(dictExcelCMIS).length} khách hàng</b> từ Excel`;
+    await runFullProcess();
+}
+
+document.getElementById('excelInput').addEventListener('change', (e) => handleExcelUpload(e, 'excelStatusText'));
+document.getElementById('excelInputDual').addEventListener('change', (e) => handleExcelUpload(e, 'excelDualStatusText'));
 
 function taoChuoiGio(ds, isDat) {
     if (!ds || !ds.length) return "-";
@@ -814,56 +1086,95 @@ function taoChuoiGio(ds, isDat) {
     return ds.map(g => `<span class="${cls}">${g} ${ic}</span>`).join("<br>");
 }
 
+async function parseSinglePdfFile(file, mode, forcedStage = null) {
+    let pdfObj = await extractTextFromPDF(file);
+    let text = pdfObj.standard;
+    let low = (pdfObj.standard + "\n" + pdfObj.twoCol).toLowerCase();
+    let data = null;
+
+    if (mode === "AUTO") {
+        if (low.includes("tên công tơ") || low.includes("số sx:")) data = xuLyFileGelex(text);
+        else if (low.includes("thông tin công tơ")) data = xuLyFileDts27Do(text);
+        else if (low.includes("program counter") || low.includes("ct value")) data = xuLyFilePsmart(text);
+        else if (low.includes("hhm")) data = xuLyFileHhm(text);
+        else if (low.includes("vse") || low.includes("nbg")) data = xuLyFileVinasino(text);
+        else if (low.includes("meter number:") || low.includes("configuration program")) data = xuLyFileDts27Xanh(text);
+        else data = xuLyFileElster(pdfObj, file.name);
+    } else if (mode === "GELEX") data = xuLyFileGelex(text);
+    else if (mode === "ELSTER") data = xuLyFileElster(pdfObj, file.name);
+    else if (mode === "DTS27_DO") data = xuLyFileDts27Do(text);
+    else if (mode === "DTS27_XANH") data = xuLyFileDts27Xanh(text);
+    else if (mode === "PSMART") data = xuLyFilePsmart(text);
+    else if (mode === "HHM") data = xuLyFileHhm(text);
+    else if (mode === "VINASINO") data = xuLyFileVinasino(text);
+
+    data.file_name = file.name;
+    data.forced_stage = forcedStage || detectStageHintFromFilename(file.name);
+    return data;
+}
+
 async function runFullProcess() {
+    let activeList = [];
+    if (isDualUploadMode) {
+        cachedTruocFiles.forEach(f => activeList.push({ file: f, forced: "TRƯỚC" }));
+        cachedSauFiles.forEach(f => activeList.push({ file: f, forced: "SAU" }));
+    } else {
+        cachedAllFiles.forEach(f => activeList.push({ file: f, forced: null }));
+    }
+
+    if (activeList.length === 0) return;
+
     const resultSec = document.getElementById('resultSection');
     const banner = document.getElementById('statusBanner');
     resultSec.style.display = 'block';
     banner.className = 'status-banner status-wait';
-    banner.innerHTML = `⏳ Đang phân tích ${cachedPdfFiles.length} file PDF ngay trên thiết bị...`;
+    banner.innerHTML = `⏳ Đang phân tích ${activeList.length} file PDF ngay trên thiết bị...`;
 
     const mode = document.getElementById('loaiCongTo').value;
     let danhSachTho = [];
 
-    for (let file of cachedPdfFiles) {
+    for (let item of activeList) {
         try {
-            let text = await extractTextFromPDF(file);
-            let low = text.toLowerCase();
-            let data = null;
-
-            if (mode === "AUTO") {
-                if (low.includes("tên công tơ") || low.includes("số sx:")) data = xuLyFileGelex(text);
-                else if (low.includes("thông tin công tơ")) data = xuLyFileDts27Do(text);
-                else if (low.includes("program counter") || low.includes("ct value")) data = xuLyFilePsmart(text);
-                else if (low.includes("hhm")) data = xuLyFileHhm(text);
-                else if (low.includes("vse") || low.includes("nbg")) data = xuLyFileVinasino(text);
-                else if (low.includes("meter number:") || low.includes("configuration program")) data = xuLyFileDts27Xanh(text);
-                else data = xuLyFileElster(text);
-            } else if (mode === "GELEX") data = xuLyFileGelex(text);
-            else if (mode === "ELSTER") data = xuLyFileElster(text);
-            else if (mode === "DTS27_DO") data = xuLyFileDts27Do(text);
-            else if (mode === "DTS27_XANH") data = xuLyFileDts27Xanh(text);
-            else if (mode === "PSMART") data = xuLyFilePsmart(text);
-            else if (mode === "HHM") data = xuLyFileHhm(text);
-            else if (mode === "VINASINO") data = xuLyFileVinasino(text);
-
-            data.file_name = file.name;
-            danhSachTho.push(data);
+            let parsed = await parseSinglePdfFile(item.file, mode, item.forced);
+            danhSachTho.push(parsed);
         } catch (err) {
-            console.error("Lỗi đọc file:", file.name, err);
+            console.error("Lỗi đọc file:", item.file.name, err);
         }
     }
 
-    // Phân loại TRƯỚC / SAU theo Serial
+    // GOM NHÓM THEO TỪNG SỐ SERIAL CÔNG TƠ ĐỂ KHÔNG BAO GIỜ NHẦM GIỮA CÁC CÔNG TƠ KHÁC NHAU
     banGhiHoanThien = [];
     let serialSet = [...new Set(danhSachTho.map(d => d.serial))];
+
     serialSet.forEach(s => {
-        let cungSerial = danhSachTho.filter(d => d.serial === s).sort((a, b) => a.lan_cai_dat - b.lan_cai_dat);
+        let cungSerial = danhSachTho.filter(d => d.serial === s);
+
+        // Sắp xếp trong nội bộ cùng 1 chiếc công tơ: ưu tiên SL LP tăng dần, nếu SL LP bằng nhau thì ưu tiên gợi ý tên file (TRƯỚC / L1 đứng trước)
+        cungSerial.sort((a, b) => {
+            if (a.lan_cai_dat !== b.lan_cai_dat) return a.lan_cai_dat - b.lan_cai_dat;
+            if (a.forced_stage === "TRƯỚC" && b.forced_stage !== "TRƯỚC") return -1;
+            if (a.forced_stage !== "TRƯỚC" && b.forced_stage === "TRƯỚC") return 1;
+            return a.file_name.localeCompare(b.file_name);
+        });
+
         cungSerial.forEach((fd, idx) => {
             if (cungSerial.length === 1) {
-                if (fd.is_tt60) { fd.giai_doan = "SAU"; fd.text_ket_qua = "● ĐẠT (TT60)"; fd.is_hop_le = true; }
-                else if (fd.is_tt16) { fd.giai_doan = "TRƯỚC"; fd.text_ket_qua = "● ĐẠT (TT16)"; fd.is_hop_le = true; }
-                else { fd.giai_doan = "CHƯA RÕ"; fd.text_ket_qua = "● SAI GIỜ"; fd.is_hop_le = false; }
+                // Nếu chỉ kéo lẻ 1 file của Serial này
+                if (fd.forced_stage === "TRƯỚC") {
+                    fd.giai_doan = "TRƯỚC";
+                    fd.text_ket_qua = fd.is_tt16 ? "● ĐẠT (TT16)" : "❌ SAI BIỂU GIÁ CŨ";
+                    fd.is_hop_le = fd.is_tt16;
+                } else if (fd.forced_stage === "SAU") {
+                    fd.giai_doan = "SAU";
+                    fd.text_ket_qua = fd.is_tt60 ? "● ĐẠT (TT60)" : "❌ LỖI: SAI GIỜ TT60";
+                    fd.is_hop_le = fd.is_tt60;
+                } else {
+                    if (fd.is_tt60) { fd.giai_doan = "SAU"; fd.text_ket_qua = "● ĐẠT (TT60)"; fd.is_hop_le = true; }
+                    else if (fd.is_tt16) { fd.giai_doan = "TRƯỚC"; fd.text_ket_qua = "● ĐẠT (TT16)"; fd.is_hop_le = true; }
+                    else { fd.giai_doan = "CHƯA RÕ"; fd.text_ket_qua = "● SAI GIỜ"; fd.is_hop_le = false; }
+                }
             } else {
+                // Khi có đủ cặp file của cùng 1 Serial công tơ
                 if (idx === 0) {
                     fd.giai_doan = "TRƯỚC";
                     fd.text_ket_qua = fd.is_tt16 ? "● ĐẠT (TT16)" : "❌ SAI BIỂU GIÁ CŨ";
@@ -874,6 +1185,10 @@ async function runFullProcess() {
                     fd.is_hop_le = fd.is_tt60;
                 }
             }
+
+            // Kiểm tra cảnh báo 3 biểu B1, B2, B3 ở cả 2 chiều Giao và Nhận đều bằng 0
+            fd.is_zero_3bieu = (fd.b1_giao + fd.b2_giao + fd.b3_giao + fd.b1_nhan + fd.b2_nhan + fd.b3_nhan) === 0;
+
             // VLOOKUP từ Excel CMIS
             let sNorm = String(fd.serial || '').trim().padStart(12, '0');
             if (dictExcelCMIS[sNorm]) {
@@ -883,7 +1198,7 @@ async function runFullProcess() {
         });
     });
 
-    // Vẽ bảng & Thống kê
+    // VẼ BẢNG KẾT QUẢ
     const tbody = document.getElementById('tableBody');
     tbody.innerHTML = "";
     let passCount = 0, failCount = 0;
@@ -893,25 +1208,27 @@ async function runFullProcess() {
         let isGioDung = (d.giai_doan === "SAU") ? d.is_tt60 : d.is_tt16;
         let badgeCls = d.is_hop_le ? "badge-green" : "badge-red";
         let stageCls = (d.giai_doan === "SAU") ? "stage-sau" : "stage-truoc";
+        let zClsGiao = d.is_zero_3bieu ? "col-so zero-tariff-cell" : "col-so";
+        let zClsNhan = d.is_zero_3bieu ? "col-nhan zero-tariff-cell" : "col-nhan";
 
         let tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td class="${stageCls}">${d.giai_doan}</td>
-            <td style="color:#1976d2; text-align:left; font-weight:600;">${d.file_name}</td>
+            <td class="col-filename">${d.file_name}</td>
             <td><b>${d.serial}</b></td>
-            <td><b>${d.ten_cong_to}</b></td>
+            <td class="col-metername">${d.ten_cong_to}</td>
             <td>${d.lan_cai_dat}</td>
-            <td>${d.ngay_lap_trinh}</td>
+            <td class="col-date">${d.ngay_lap_trinh}</td>
             <td>${d.tu}/${d.ti}</td>
             <td class="col-so">${d.p_giao.toLocaleString('en-US')}</td>
-            <td class="col-so">${d.b1_giao.toLocaleString('en-US')}</td>
-            <td class="col-so">${d.b2_giao.toLocaleString('en-US')}</td>
-            <td class="col-so">${d.b3_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b1_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b2_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b3_giao.toLocaleString('en-US')}</td>
             <td class="col-nhan">${d.p_nhan.toLocaleString('en-US')}</td>
-            <td class="col-nhan">${d.b1_nhan.toLocaleString('en-US')}</td>
-            <td class="col-nhan">${d.b2_nhan.toLocaleString('en-US')}</td>
-            <td class="col-nhan">${d.b3_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b1_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b2_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b3_nhan.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_giao.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_nhan.toLocaleString('en-US')}</td>
             <td>${taoChuoiGio(d.thuc_te_nt.T3, isGioDung)}</td>
@@ -930,13 +1247,13 @@ async function runFullProcess() {
 
     if (failCount === 0 && banGhiHoanThien.length > 0) {
         banner.className = 'status-banner status-ok';
-        banner.innerHTML = '✅ Tuyệt vời! Toàn bộ các file đều ĐẠT chuẩn cấu hình khung giờ.';
+        banner.innerHTML = '✅ Tuyệt vời! Toàn bộ các file đều ĐẠT chuẩn cấu hình khung giờ biểu giá.';
     } else {
         banner.className = 'status-banner status-err';
         banner.innerHTML = `⚠️ Cảnh báo: Phát hiện ${failCount} file có sai lệch hoặc lỗi lập trình biểu giá!`;
     }
 
-    // Chạy Radar QC
+    // CHẠY HỆ THỐNG CẢNH BÁO RADAR QC
     chayRadarQC();
 }
 
@@ -947,15 +1264,20 @@ function chayRadarQC() {
         let files = banGhiHoanThien.filter(x => x.serial === s);
         let dTr = files.find(x => x.giai_doan === "TRƯỚC");
         let dSa = files.find(x => x.giai_doan === "SAU");
+
+        // 1. Cảnh báo số lần lập trình nhảy vọt > +1
         if (dTr && dSa && (dSa.lan_cai_dat > dTr.lan_cai_dat + 1)) {
             canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (Trước: ${dTr.lan_cai_dat} ➡️ Sau: ${dSa.lan_cai_dat}).`);
         }
-        [dTr, dSa].forEach(d => {
-            if (d) {
-                let sum = d.p_giao + d.b1_giao + d.b2_giao + d.b3_giao + d.p_nhan + d.b1_nhan + d.b2_nhan + d.b3_nhan + d.q_giao + d.q_nhan;
-                if (sum === 0) {
-                    canhBao.push(`⚠️ <b>Công tơ ${s} (Giai đoạn ${d.giai_doan}):</b> Toàn bộ chỉ số đang bằng 0. Anh em lưu ý rà soát lại!`);
-                }
+
+        // 2. Cảnh báo toàn bộ chỉ số = 0 HOẶC 3 biểu B1, B2, B3 ở cả 2 chiều Giao/Nhận đều = 0
+        files.forEach(d => {
+            let sumAll = d.p_giao + d.b1_giao + d.b2_giao + d.b3_giao + d.p_nhan + d.b1_nhan + d.b2_nhan + d.b3_nhan + d.q_giao + d.q_nhan;
+            let sum3Bieu = d.b1_giao + d.b2_giao + d.b3_giao + d.b1_nhan + d.b2_nhan + d.b3_nhan;
+            if (sumAll === 0) {
+                canhBao.push(`⚠️ <b>Công tơ ${s} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
+            } else if (sum3Bieu === 0) {
+                canhBao.push(`🚨 <b>Công tơ ${s} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
             }
         });
     });
@@ -964,7 +1286,7 @@ function chayRadarQC() {
     const qcList = document.getElementById('qcList');
     if (canhBao.length > 0) {
         qcBox.style.display = 'block';
-        document.getElementById('qcTitle').innerHTML = `🚨 TỔNG HỢP QC: Phát hiện ${canhBao.length} điểm bất thường cần rà soát`;
+        document.getElementById('qcTitle').innerHTML = `🚨 TỔNG HỢP QC: Phát hiện ${canhBao.length} điểm bất thường cần rà soát lại`;
         qcList.innerHTML = canhBao.map(c => `<li>${c}</li>`).join("");
     } else {
         qcBox.style.display = 'none';
@@ -977,15 +1299,21 @@ function toggleQC() {
 }
 
 function resetAll() {
-    cachedPdfFiles = [];
+    cachedAllFiles = [];
+    cachedTruocFiles = [];
+    cachedSauFiles = [];
     banGhiHoanThien = [];
-    document.getElementById('pdfInput').value = "";
-    document.getElementById('pdfStatusText').innerText = "Hỗ trợ chọn hàng loạt trên cả iPhone, Android & PC";
+    document.getElementById('pdfInputAll').value = "";
+    document.getElementById('pdfInputTruoc').value = "";
+    document.getElementById('pdfInputSau').value = "";
+    document.getElementById('pdfStatusText').innerText = "Tự động gom theo Serial, nhận diện SL LP & tên file (truoc/sau, đuôi L1)";
+    document.getElementById('pdfTruocStatusText').innerText = "Khóa cứng giai đoạn TRƯỚC (So sánh với TT16)";
+    document.getElementById('pdfSauStatusText').innerText = "Khóa cứng giai đoạn SAU (So sánh với TT60)";
     document.getElementById('resultSection').style.display = 'none';
 }
 
 // =========================================================================
-// XUẤT EXCEL TỔNG HỢP & XUẤT WORD BIÊN BẢN (QĐ 963)
+// XUẤT BÁO CÁO EXCEL & XUẤT BIÊN BẢN WORD / ZIP (QĐ 963)
 // =========================================================================
 function xuatExcelTongHop() {
     if (!banGhiHoanThien.length) return;
@@ -1008,6 +1336,7 @@ function xuatExcelTongHop() {
         "B3 Nhận (kWh)": d.b3_nhan,
         "Q Giao (kVArh)": d.q_giao,
         "Q Nhận (kVArh)": d.q_nhan,
+        "Cảnh báo B1=B2=B3=0": d.is_zero_3bieu ? "CẢ 3 BIỂU BẰNG 0" : "Bình thường",
         "Kết quả đối soát": d.text_ket_qua.replace("● ", "")
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
