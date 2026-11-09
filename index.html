@@ -816,8 +816,9 @@ function xuLyFileDts27Do(text) {
 function xuLyFileDts27Xanh(text) {
     let clean = text.replace(/"/g, '');
     let soM = clean.match(/Meter number:[\s\,\n]*(\d+)/i);
-    let slM = clean.match(/Number Of Configuration Program[\s\S]*?Changes[\s\S]*?0\.0\.96\.2\.0\.255[\s\,\n]*(\d+)/i);
-    let tgM = clean.match(/The Latest Programming Date and[\s\S]*?Time[\s\S]*?0\.0\.96\.2\.1\.255[\s\,\n]*([\d\- \:]+)/i);
+    // Bắt thẳng mã OBIS 0.0.96.2.0.255 và 0.0.96.2.1.255 (bất chấp chữ Changes/Time bị nhảy dòng)
+    let slM = clean.match(/0\.0\.96\.2\.0\.255(?:[\s\,\n]|Changes)*(\d+)/i);
+    let tgM = clean.match(/0\.0\.96\.2\.1\.255[\s\S]{0,40}?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/i);
     let ngayLt = "N/A";
     if (tgM) {
         let raw = tgM[1].trim();
