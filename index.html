@@ -608,14 +608,13 @@ function vietHoaNgayThangElster(chuoiGoc) {
 }
 
 function xuLyFileElster(pdfObj, fileName = "") {
-    // Kết hợp cả bản標準 và bản tách 2 cột để không sót bất kỳ trường nào
     const textStd = pdfObj.standard;
     const textCol = pdfObj.twoCol;
     const combined = textStd + "\n" + textCol;
 
+    let headerSerialM = combined.match(/\b(\d{7,10})\s+\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2}:\d{2}\s*(?:AM|PM|SA|CH)?/i);
     let serialM = combined.match(/New serial number\s*[\-:]*\s*(\d+)/i) || combined.match(/Serial number\s*[\-:]*\s*(\d{7,12})/i);
-    let serial = serialM ? serialM[1] : "N/A";
-    // Dự phòng nếu PDF bị mất chữ New serial number thì lấy 8 số cuối của mã điểm đo trên tên file
+    let serial = serialM ? serialM[1] : (headerSerialM ? headerSerialM[1] : "N/A");
     if (serial === "N/A" && fileName) {
         let fnMatch = fileName.match(/\d{7}(\d{8})/);
         if (fnMatch) serial = fnMatch[1];
@@ -629,9 +628,9 @@ function xuLyFileElster(pdfObj, fileName = "") {
     let soLan = progM ? parseInt(progM[1], 10) : 0;
     let ngayLapTrinh = progM ? vietHoaNgayThangElster(progM[2]) : "N/A";
 
-    // Quét chỉ số P, Q trên cả bản tiêu chuẩn và bản tách cột
     let idxCurStd = textStd.indexOf("Current Values");
     let idxCurCol = textCol.indexOf("Current Values");
+    let isMissingTables = (idxCurStd === -1 && idxCurCol === -1) || !progM;
     let txtCs = (idxCurStd !== -1 ? textStd.slice(idxCurStd) : textStd) + "\n" +
                 (idxCurCol !== -1 ? textCol.slice(idxCurCol) : textCol);
 
@@ -690,6 +689,7 @@ function xuLyFileElster(pdfObj, fileName = "") {
     }
 
     return {
+        is_missing_tables: isMissingTables,
         ten_cong_to: tenCongTo, serial,
         tu: tuM ? tuM[1] : "1.0", ti: tiM ? tiM[1] : "1.0",
         lan_cai_dat: soLan, ngay_lap_trinh: ngayLapTrinh,
@@ -1260,27 +1260,36 @@ async function runFullProcess() {
 
 function chayRadarQC() {
     let canhBao = [];
+
+    // 1. Cảnh báo số lần lập trình nhảy vọt > +1 (quét theo cặp Serial)
     let serials = [...new Set(banGhiHoanThien.map(x => x.serial).filter(s => s && s !== "N/A"))];
     serials.forEach(s => {
         let files = banGhiHoanThien.filter(x => x.serial === s);
         let dTr = files.find(x => x.giai_doan === "TRƯỚC");
         let dSa = files.find(x => x.giai_doan === "SAU");
 
-        // 1. Cảnh báo số lần lập trình nhảy vọt > +1
         if (dTr && dSa && (dSa.lan_cai_dat > dTr.lan_cai_dat + 1)) {
             canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (Trước: ${dTr.lan_cai_dat} ➡️ Sau: ${dSa.lan_cai_dat}).`);
         }
+    });
 
-        // 2. Cảnh báo toàn bộ chỉ số = 0 HOẶC 3 biểu B1, B2, B3 ở cả 2 chiều Giao/Nhận đều = 0
-        files.forEach(d => {
-            let sumAll = d.p_giao + d.b1_giao + d.b2_giao + d.b3_giao + d.p_nhan + d.b1_nhan + d.b2_nhan + d.b3_nhan + d.q_giao + d.q_nhan;
-            let sum3Bieu = d.b1_giao + d.b2_giao + d.b3_giao + d.b1_nhan + d.b2_nhan + d.b3_nhan;
+    // 2. Quét toàn bộ các file đã nạp (bao gồm cả file lẻ và file thiếu thông số)
+    banGhiHoanThien.forEach(d => {
+        let nhanCongTo = (d.serial && d.serial !== "N/A") ? `Công tơ ${d.serial}` : `File chưa rõ Serial`;
+        let sumAll = d.p_giao + d.b1_giao + d.b2_giao + d.b3_giao + d.p_nhan + d.b1_nhan + d.b2_nhan + d.b3_nhan + d.q_giao + d.q_nhan;
+        let sum3Bieu = d.b1_giao + d.b2_giao + d.b3_giao + d.b1_nhan + d.b2_nhan + d.b3_nhan;
+
+        // LỖI MỚI: File PDF xuất thiếu bảng thông số (chỉ in phần Tariff như duc manh.pdf)
+        if (d.is_missing_tables) {
+            canhBao.push(`📄 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI XUẤT FILE PDF THIẾU THÔNG SỐ!</b> File chỉ có bảng khung giờ biểu giá (Tariff), thiếu hoàn toàn bảng Chỉ số điện năng (Current Values) và Lịch sử lập trình (SL LP & Ngày lập trình). 👉 Yêu cầu xuất lại file đọc đầy đủ!`);
+        } else {
+            // GIỮ NGUYÊN LỖI CŨ: Toàn bộ chỉ số = 0 HOẶC 3 biểu B1, B2, B3 ở cả 2 chiều Giao/Nhận đều = 0
             if (sumAll === 0) {
-                canhBao.push(`⚠️ <b>Công tơ ${s} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
+                canhBao.push(`⚠️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
             } else if (sum3Bieu === 0) {
-                canhBao.push(`🚨 <b>Công tơ ${s} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
+                canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
             }
-        });
+        }
     });
 
     const qcBox = document.getElementById('qcBox');
