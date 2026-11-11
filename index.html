@@ -805,10 +805,13 @@ function phanTichKhungGioGelex(textDay) {
 }
 
 function xuLyFileGelex(text) {
-    let soM = text.match(/Số SX:\s*(\d+)/i) || text.match(/Số hiệu sản[\s\S]*?(\d{7,12})/i);
-    let tenM = text.match(/Tên công tơ[\s|:\n]*([A-Za-z0-9\-]+)/i);
-    let slM = text.match(/Số lần lập trình[\s|:\n]*(\d+)/i);
-    let tgM = text.match(/Thời gian lập trình cuối[\s|:\n]*([\d/: ]+(?:AM|PM)?)/i) || text.match(/Thời gian thực[\s|:\n]*([\d/: ]+(?:AM|PM)?)/i);
+    let soM = text.match(/Số\s*SX:\s*(\d+)/i) || text.match(/Số\s*hiệu\s*sản[\s\S]{1,40}?(\d{7,12})/i);
+    let tenM = text.match(/Tên\s*công\s*tơ[\s|:\n]*([A-Za-z0-9\-]+)/i);
+    let slM = text.match(/Số\s*lần\s*lập\s*trình[\s|:\n]*(\d+)/i);
+    let tgM = text.match(/Thời\s*gian\s*lập\s*trình\s*cuối[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
+           || text.match(/Số\s*SX:\s*\d+[:\s]*Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)/i)
+           || text.match(/Thời\s*gian\s*thực[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
+           || text.match(/Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i);
 
     // Tự động bắt cả mẫu cũ (Ngày 1 / Ngày 2) lẫn mẫu mới 305 (DT1 / DT2 bị ngắt trang)
     let strNgay1 = "", strNgay2 = "";
