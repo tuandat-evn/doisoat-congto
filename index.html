@@ -265,6 +265,8 @@
         /* Chữ TT16 sắc nét trên nền sáng viền đậm - Chữ TT60 trắng đậm nổi bật trên nền xanh đặc */
         .row-truoc .badge-dat-truoc { background-color: #f8fafc !important; color: #0f172a !important; border: 1.5px solid #64748b !important; font-weight: 800 !important; box-shadow: none !important; }
         .row-sau .badge-dat-sau { background-color: #16a34a !important; color: #ffffff !important; border: 1.5px solid #15803d !important; font-weight: 800 !important; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.35) !important; }
+    /* Thẻ màu Vàng Hổ Phách cho các khoảng giờ ĐẠT nhờ cộng dồn (gộp mốc) */
+        .tag-amber { display: inline-block; background-color: #fef3c7 !important; color: #b45309 !important; border: 1.5px solid #f59e0b !important; padding: 2px 7px; border-radius: 5px; font-weight: 700 !important; font-size: 11px; margin: 1px 0; cursor: help; box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15); }
     </style>
 </head>
 <body>
@@ -716,55 +718,133 @@ function xuLyFileElster(pdfObj, fileName = "") {
 }
 
 // =========================================================================
-// 2. LÕI GELEX ME
+// 2. LÕI GELEX ME (HỖ TRỢ CẢ MẪU 304 NGÀY 1/2 & MẪU 305 DT1/DT2 + CỘNG DỒN MỐC DƯ)
 // =========================================================================
 function phanTichKhungGioGelex(textDay) {
-    let ketQua = { T1: [], T2: [], T3: [] };
+    let ketQua = { T1: [], T2: [], T3: [], merged_map: {}, details: [] };
     if (!textDay) return ketQua;
+
+    // Lọc bỏ dòng header/footer ngắt trang (Số SX: ... 2/3) nếu bị chèn giữa DT1 và DT2
+    let cleanText = textDay.replace(/Số\s*SX:[\s\S]*?(?:\d+\/\d+|\(-?\d+\))/gi, " ");
+
     let mocGio = [];
     let reg = /(\d{2}:\d{2})\s*(T[1-3])/g;
     let m;
-    while ((m = reg.exec(textDay)) !== null) mocGio.push([m[1], m[2]]);
-    for (let i = 0; i < mocGio.length; i++) {
-        let start = mocGio[i][0], bieu = mocGio[i][1];
-        let end = (i < mocGio.length - 1) ? mocGio[i + 1][0] : "24:00";
-        ketQua[bieu].push(`${start}-${end}`);
+    while ((m = reg.exec(cleanText)) !== null) {
+        mocGio.push({ time: m[1], bieu: m[2] });
     }
+    if (mocGio.length === 0) return ketQua;
+
+    // Bước 1: Tạo các đoạn giờ thô ban đầu
+    let rawSegs = [];
+    for (let i = 0; i < mocGio.length; i++) {
+        let start = mocGio[i].time;
+        let bieu = mocGio[i].bieu;
+        let end = (i < mocGio.length - 1) ? mocGio[i + 1].time : "24:00";
+        if (start !== end) {
+            rawSegs.push({ start, end, bieu, parts: [`${start}-${end}`] });
+        }
+    }
+
+    // Bước 2: Cộng dồn (Gộp) các đoạn liền kề có cùng biểu giá (T1, T2, T3)
+    let mergedSegs = [];
+    for (let seg of rawSegs) {
+        if (mergedSegs.length > 0) {
+            let last = mergedSegs[mergedSegs.length - 1];
+            if (last.bieu === seg.bieu && last.end === seg.start) {
+                last.end = seg.end;
+                last.parts.push(seg.parts[0]);
+                continue;
+            }
+        }
+        mergedSegs.push({ start: seg.start, end: seg.end, bieu: seg.bieu, parts: [...seg.parts] });
+    }
+
+    // Bước 3: Đưa vào danh sách T1, T2, T3 và ghi nhận chi tiết những khoảng nào đã được gộp
+    const tenBieuMap = { T3: "T3 (TĐ)", T1: "T1 (BT)", T2: "T2 (CĐ)" };
+    let detailByBieu = { T3: [], T1: [], T2: [] };
+
+    for (let item of mergedSegs) {
+        let rangeStr = `${item.start}-${item.end}`;
+        ketQua[item.bieu].push(rangeStr);
+        if (item.parts.length > 1) {
+            let formula = `${item.parts.join(" + ")} ➔ ${rangeStr}`;
+            ketQua.merged_map[`${item.bieu}_${rangeStr}`] = `Đã cộng dồn từ: ${item.parts.join(" + ")}`;
+            detailByBieu[item.bieu].push(`[${formula}]`);
+        }
+    }
+
+    ["T3", "T1", "T2"].forEach(b => {
+        if (detailByBieu[b].length > 0) {
+            ketQua.details.push(`<b>${tenBieuMap[b]}</b> ${detailByBieu[b].join(" ")}`);
+        }
+    });
+
     return ketQua;
 }
 
 function xuLyFileGelex(text) {
-    let soM = text.match(/Số SX:\s*(\d+)/i);
-    let tenM = text.match(/Tên công tơ.*?([A-Za-z0-9\-]+)/i);
-    let slM = text.match(/Số lần lập trình\s*(\d+)/i);
-    let tgM = text.match(/Thời gian lập trình cuối\s*([\d/: ]+)/i);
+    let soM = text.match(/Số SX:\s*(\d+)/i) || text.match(/Số hiệu sản[\s\S]*?(\d{7,12})/i);
+    let tenM = text.match(/Tên công tơ[\s|:\n]*([A-Za-z0-9\-]+)/i);
+    let slM = text.match(/Số lần lập trình[\s|:\n]*(\d+)/i);
+    let tgM = text.match(/Thời gian lập trình cuối[\s|:\n]*([\d/: ]+(?:AM|PM)?)/i) || text.match(/Thời gian thực[\s|:\n]*([\d/: ]+(?:AM|PM)?)/i);
 
-    let mNgay1 = text.match(/Ngày 1\s*([\s\S]*?)(?:\nNgày 2|$)/i);
-    let mNgay2 = text.match(/Ngày 2\s*([\s\S]*?)(?:\nCấu hình tuần|$)/i);
-    let thucTeNt = phanTichKhungGioGelex(mNgay1 ? mNgay1[1] : "");
-    let thucTeCn = phanTichKhungGioGelex(mNgay2 ? mNgay2[1] : "");
+    // Tự động bắt cả mẫu cũ (Ngày 1 / Ngày 2) lẫn mẫu mới 305 (DT1 / DT2 bị ngắt trang)
+    let strNgay1 = "", strNgay2 = "";
+    let mNgay1 = text.match(/Ngày 1\s*([\s\S]*?)(?:\n\s*Ngày 2|$)/i);
+    let mNgay2 = text.match(/Ngày 2\s*([\s\S]*?)(?:\n\s*Cấu hình tuần|$)/i);
+
+    if (mNgay1 && /\d{2}:\d{2}\s*T[1-3]/.test(mNgay1[1])) {
+        strNgay1 = mNgay1[1];
+        strNgay2 = mNgay2 ? mNgay2[1] : "";
+    } else {
+        let mDt1 = text.match(/Biểu giá theo ngày[\s\S]*?DT0?1\b([\s\S]*?)(?:\bDT0?2\b|Biểu giá theo tuần|$)/i);
+        let mDt2 = text.match(/\bDT0?2\b([\s\S]*?)(?:Biểu giá theo tuần|Cấu hình tuần|$)/i);
+        strNgay1 = mDt1 ? mDt1[1] : "";
+        strNgay2 = mDt2 ? mDt2[1] : "";
+    }
+
+    let thucTeNt = phanTichKhungGioGelex(strNgay1);
+    let thucTeCn = phanTichKhungGioGelex(strNgay2);
 
     const getObis = (obis) => {
-        let reg = new RegExp(obis + ".*?([\\d\\.,]+)\\s*(?:kWh|kvarh)", "i");
+        let reg = new RegExp(obis + "[\\s\\S]*?([\\d\\.,]+)\\s*(?:kWh|kvarh)", "i");
         let m = text.match(reg);
         if (!m) return 0;
         let v = parseFloat(m[1].replace(/,/g, ''));
         return isNaN(v) ? 0 : Math.trunc(v);
     };
 
-    let isTt16 = arrEqual(thucTeNt.T1, TT16_T1) && arrEqual(thucTeNt.T2, TT16_T2) && arrEqual(thucTeNt.T3, TT16_T3);
-    let isTt60 = arrEqual(thucTeNt.T1, TT60_T1) && arrEqual(thucTeNt.T2, TT60_T2) && arrEqual(thucTeNt.T3, TT60_T3);
+    // Kiểm tra chuẩn TT16 và TT60 (cả Ngày thường DT1 và Chủ nhật DT2)
+    let isTt16Nt = arrEqual(thucTeNt.T1, TT16_T1) && arrEqual(thucTeNt.T2, TT16_T2) && arrEqual(thucTeNt.T3, TT16_T3);
+    let isTt16Cn = arrEqual(thucTeCn.T1, ["04:00-22:00"]) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, ["00:00-04:00", "22:00-24:00"]);
+    let isTt16 = isTt16Nt && (thucTeCn.T1.length === 0 || isTt16Cn);
+
+    let isTt60Nt = arrEqual(thucTeNt.T1, TT60_T1) && arrEqual(thucTeNt.T2, TT60_T2) && arrEqual(thucTeNt.T3, TT60_T3);
+    let isTt60Cn = arrEqual(thucTeCn.T1, ["06:00-24:00"]) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, ["00:00-06:00"]);
+    let isTt60 = isTt60Nt && (thucTeCn.T1.length === 0 || isTt60Cn);
+
+    // Tổng hợp chi tiết gộp mốc (nếu có) để báo lên hộp Radar QC
+    let gopGioInfo = [];
+    if (thucTeNt.details && thucTeNt.details.length > 0) {
+        gopGioInfo.push(`<b>Thứ 2 ➔ Thứ 7 (DT1):</b> ${thucTeNt.details.join(" | ")}`);
+    }
+    if (thucTeCn.details && thucTeCn.details.length > 0) {
+        gopGioInfo.push(`<b>Chủ nhật (DT2):</b> ${thucTeCn.details.join(" | ")}`);
+    }
 
     return {
-        ten_cong_to: tenM ? tenM[1] : "GELEX",
-        serial: soM ? soM[1] : "N/A",
+        ten_cong_to: tenM ? tenM[1].trim() : "GELEX",
+        serial: soM ? soM[1].trim() : "N/A",
         tu: "1.0", ti: "1.0",
         lan_cai_dat: slM ? parseInt(slM[1], 10) : 0,
         ngay_lap_trinh: tgM ? tgM[1].trim() : "N/A",
         p_giao: getObis("1\\.8\\.0"), b1_giao: getObis("1\\.8\\.1"), b2_giao: getObis("1\\.8\\.2"), b3_giao: getObis("1\\.8\\.3"),
         p_nhan: getObis("2\\.8\\.0"), b1_nhan: getObis("2\\.8\\.1"), b2_nhan: getObis("2\\.8\\.2"), b3_nhan: getObis("2\\.8\\.3"),
         q_giao: getObis("3\\.8\\.0"), q_nhan: getObis("4\\.8\\.0"),
-        is_tt16: isTt16, is_tt60: isTt60, thuc_te_nt: thucTeNt, thuc_te_cn: thucTeCn
+        is_tt16: isTt16, is_tt60: isTt60,
+        thuc_te_nt: thucTeNt, thuc_te_cn: thucTeCn,
+        gop_gio_details: gopGioInfo
     };
 }
 
@@ -1088,11 +1168,17 @@ async function handleExcelUpload(e, statusId) {
 document.getElementById('excelInput').addEventListener('change', (e) => handleExcelUpload(e, 'excelStatusText'));
 document.getElementById('excelInputDual').addEventListener('change', (e) => handleExcelUpload(e, 'excelDualStatusText'));
 
-function taoChuoiGio(ds, isDat) {
+function taoChuoiGio(ds, isDat, mergedMap = null, bieuKey = "") {
     if (!ds || !ds.length) return "-";
-    let cls = isDat ? "tag-green" : "tag-red";
-    let ic = isDat ? "✓" : "✗";
-    return ds.map(g => `<span class="${cls}">${g} ${ic}</span>`).join("<br>");
+    return ds.map(g => {
+        let tip = (mergedMap && bieuKey && mergedMap[`${bieuKey}_${g}`]) ? mergedMap[`${bieuKey}_${g}`] : "";
+        if (isDat && tip) {
+            return `<span class="tag-amber" title="${tip}">${g} ~</span>`;
+        }
+        let cls = isDat ? "tag-green" : "tag-red";
+        let ic = isDat ? "✓" : "✗";
+        return `<span class="${cls}">${g} ${ic}</span>`;
+    }).join("<br>");
 }
 
 async function parseSinglePdfFile(file, mode, forcedStage = null) {
@@ -1243,11 +1329,11 @@ async function runFullProcess() {
             <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b3_nhan.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_giao.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_nhan.toLocaleString('en-US')}</td>
-            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T3, isGioDung)}</td>
-            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T1, isGioDung)}</td>
-            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T2, isGioDung)}</td>
-            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T3, isGioDung)}</td>
-            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T1, isGioDung)}</td>
+            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T3, isGioDung, d.thuc_te_nt.merged_map, "T3")}</td>
+            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T1, isGioDung, d.thuc_te_nt.merged_map, "T1")}</td>
+            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T2, isGioDung, d.thuc_te_nt.merged_map, "T2")}</td>
+            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T3, isGioDung, d.thuc_te_cn.merged_map, "T3")}</td>
+            <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T1, isGioDung, d.thuc_te_cn.merged_map, "T1")}</td>
             <td class="${gioTdCls}"><span class="${finalBadgeCls}">${d.text_ket_qua}</span></td>
         `;
         tbody.appendChild(tr);
@@ -1302,12 +1388,25 @@ function chayRadarQC() {
             }
         }
 
-        // LỖI 4 (MỚI): Cảnh báo công tơ Gelex MCL 305 nhưng trong PDF hiển thị tên GLXME-40mG
+        // LỖI 4: Cảnh báo công tơ Gelex MCL 305 nhưng trong PDF hiển thị tên GLXME-40mG
         let fileNameStr = String(d.file_name || "");
         let isMcl305 = /(?:^|[^0-9])305\d{8,14}/.test(fileNameStr);
         let isTen40mG = /40mG/i.test(String(d.ten_cong_to || ""));
         if (isMcl305 && isTen40mG) {
             canhBao.push(`🏷️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Mã chủng loại trên tên file là <b>305 (Thực tế là công tơ GELEX ME-42 / ME-42mG / ME-42 TC103)</b> nhưng thông tin trong file PDF đang hiển thị tên là <b>${d.ten_cong_to}</b>.`);
+        }
+
+        // LỖI 5 (MỚI): Thông báo chi tiết các mốc giờ chia nhỏ đã cộng dồn theo từng biểu T3(TĐ), T1(BT), T2(CĐ)
+        let dsGop = d.gop_gio_details || [
+            ...((d.thuc_te_nt && d.thuc_te_nt.details && d.thuc_te_nt.details.length) ? [`<b>Thứ 2 ➔ Thứ 7 (DT1):</b> ${d.thuc_te_nt.details.join(" | ")}`] : []),
+            ...((d.thuc_te_cn && d.thuc_te_cn.details && d.thuc_te_cn.details.length) ? [`<b>Chủ nhật (DT2):</b> ${d.thuc_te_cn.details.join(" | ")}`] : [])
+        ];
+        if (dsGop.length > 0) {
+            let ttLabel = (d.giai_doan === "SAU") ? "TT60" : "TT16";
+            let trangThaiGop = (d.is_tt60 || d.is_tt16)
+                ? `cộng dồn liền mạch vẫn <b>ĐẠT chuẩn ${ttLabel}</b>`
+                : `đã cộng dồn các mốc liền kề cùng biểu giá`;
+            canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Khung giờ biểu giá có các mốc chia nhỏ nhưng ${trangThaiGop}:<br><span style="display:inline-block; margin-top:3px; padding-left:18px; color:#92400e;">• ${dsGop.join("<br>• ")}</span>`);
         }
     });
 
@@ -1315,7 +1414,7 @@ function chayRadarQC() {
     const qcList = document.getElementById('qcList');
     if (canhBao.length > 0) {
         qcBox.style.display = 'block';
-        document.getElementById('qcTitle').innerHTML = `🚨 TỔNG HỢP QC: Phát hiện ${canhBao.length} điểm bất thường cần rà soát lại`;
+        document.getElementById('qcTitle').innerHTML = `🚨 TỔNG HỢP QC: Phát hiện ${canhBao.length} điểm lưu ý / bất thường cần rà soát`;
         qcList.innerHTML = canhBao.map(c => `<li>${c}</li>`).join("");
     } else {
         qcBox.style.display = 'none';
