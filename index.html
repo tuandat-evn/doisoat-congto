@@ -257,10 +257,14 @@
             border: none;
             background: #f1f5f9;
         }
-    /* PHÂN TẦNG MÀU SẮC KHUNG GIỜ TT16 (TRƯỚC) VÀ TT60 (SAU) */
-        .row-truoc .tag-green { background-color: #f1f5f9 !important; color: #475569 !important; border: 1px solid #cbd5e1 !important; font-weight: 500 !important; }
+    /* PHÂN TẦNG MÀU SẮC KHUNG GIỜ & KẾT QUẢ TT16 (TRƯỚC) VÀ TT60 (SAU) */
+        .row-truoc .tag-green { background-color: #f1f5f9 !important; color: #334155 !important; border: 1px solid #cbd5e1 !important; font-weight: 600 !important; }
         .row-sau .tag-green { background-color: #d1fae5 !important; color: #065f46 !important; border: 1.5px solid #10b981 !important; font-weight: 700 !important; box-shadow: 0 1px 2px rgba(16, 185, 129, 0.15); }
         .row-sau td.col-gio-sau { background-color: #f0fdf4 !important; border-top: 1.5px solid #86efac !important; border-bottom: 1.5px solid #86efac !important; }
+        
+        /* Chữ TT16 sắc nét trên nền sáng viền đậm - Chữ TT60 trắng đậm nổi bật trên nền xanh đặc */
+        .row-truoc .badge-dat-truoc { background-color: #f8fafc !important; color: #0f172a !important; border: 1.5px solid #64748b !important; font-weight: 800 !important; box-shadow: none !important; }
+        .row-sau .badge-dat-sau { background-color: #16a34a !important; color: #ffffff !important; border: 1.5px solid #15803d !important; font-weight: 800 !important; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.35) !important; }
     </style>
 </head>
 <body>
@@ -1219,6 +1223,7 @@ async function runFullProcess() {
         let tr = document.createElement('tr');
         tr.className = (d.giai_doan === "SAU") ? "row-sau" : "row-truoc";
         let gioTdCls = (d.giai_doan === "SAU") ? "col-gio-sau" : "";
+        let finalBadgeCls = isGioDung ? `${badgeCls} ${d.giai_doan === "SAU" ? "badge-dat-sau" : "badge-dat-truoc"}` : badgeCls;
         tr.innerHTML = `
             <td>${idx + 1}</td>
             <td class="${stageCls}">${d.giai_doan}</td>
@@ -1243,7 +1248,7 @@ async function runFullProcess() {
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T2, isGioDung)}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T3, isGioDung)}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_cn.T1, isGioDung)}</td>
-            <td><span class="${badgeCls}">${d.text_ket_qua}</span></td>
+            <td class="${gioTdCls}"><span class="${finalBadgeCls}">${d.text_ket_qua}</span></td>
         `;
         tbody.appendChild(tr);
     });
