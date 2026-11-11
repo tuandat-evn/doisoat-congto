@@ -649,6 +649,28 @@ function xuLyFileElster(pdfObj, fileName = "") {
         return m ? xuLyChiSoElster(m[1]) : 0;
     };
 
+    // KIỂM TRA LỖI CÀI ĐẶT REGISTER SOURCES (RATE 1..6) TRONG MỤC TARIFF CỦA ELSTER A1700
+    let regSourcesErr = null;
+    let tariffBlockM = combined.match(/Register\s+Sources([\s\S]*?)(?=No\.\s*of\s*sub-intervals|Season\s+Definitions|Day\s+Number|Current\s+Values|$)/i);
+    if (tariffBlockM) {
+        let tb = tariffBlockM[1];
+        let wrongRates = [];
+        for (let r = 1; r <= 6; r++) {
+            let rm = tb.match(new RegExp(`Rate\\s*${r}\\s+(Import\\s+Wh|Export\\s+Wh|No\\s+source)`, "i"));
+            if (rm) {
+                let src = rm[1].replace(/\s+/g, " ").trim();
+                if (r <= 3 && !/^Import\s+Wh$/i.test(src)) {
+                    wrongRates.push(`Rate ${r} đang cài là <b>${src}</b> (chuẩn phải là Import Wh)`);
+                } else if (r >= 4 && !/^Export\s+Wh$/i.test(src)) {
+                    wrongRates.push(`Rate ${r} đang cài là <b>${src}</b> (chuẩn phải là Export Wh)`);
+                }
+            }
+        }
+        if (wrongRates.length > 0) {
+            regSourcesErr = wrongRates.join("; ");
+        }
+    }
+
     // Tìm các khối Day Number có định nghĩa Rate1/2/3 trên cả bản 2 cột và bản chuẩn
     function extractValidDayBlocks(sourceText) {
         let blocks = [];
@@ -661,7 +683,6 @@ function xuLyFileElster(pdfObj, fileName = "") {
                 blocks.push({ dayNum, parsed });
             }
         }
-        // Sắp xếp theo thứ tự Day Number tăng dần (VD: Day 3 -> Day 4 hoặc Day 5 -> Day 6)
         blocks.sort((a, b) => a.dayNum - b.dayNum);
         return blocks;
     }
@@ -676,7 +697,6 @@ function xuLyFileElster(pdfObj, fileName = "") {
     let isTt60 = false, isTt16 = false;
 
     if (validDays.length >= 2) {
-        // Nếu có nhiều cặp Day Number, kiểm tra cặp khớp TT60 hoặc TT16, mặc định lấy 2 Day Number đang active
         thucTeNt = validDays[0].parsed;
         thucTeCn = validDays[1].parsed;
         for (let i = 0; i < validDays.length - 1; i++) {
@@ -700,6 +720,7 @@ function xuLyFileElster(pdfObj, fileName = "") {
 
     return {
         is_missing_tables: isMissingTables,
+        reg_sources_err: regSourcesErr,
         ten_cong_to: tenCongTo, serial,
         tu: tuM ? tuM[1] : "1.0", ti: tiM ? tiM[1] : "1.0",
         lan_cai_dat: soLan, ngay_lap_trinh: ngayLapTrinh,
@@ -1303,8 +1324,17 @@ async function runFullProcess() {
         let isGioDung = (d.giai_doan === "SAU") ? d.is_tt60 : d.is_tt16;
         let badgeCls = d.is_hop_le ? "badge-green" : "badge-red";
         let stageCls = (d.giai_doan === "SAU") ? "stage-sau" : "stage-truoc";
-        let zClsGiao = d.is_zero_3bieu ? "col-so zero-tariff-cell" : "col-so";
-        let zClsNhan = d.is_zero_3bieu ? "col-nhan zero-tariff-cell" : "col-nhan";
+
+        // Kiểm tra riêng chiều Giao và chiều Nhận: nếu P Tổng > 0 mà cả 3 biểu B1, B2, B3 của chiều đó = 0 (hoặc lỗi cài Register Sources) thì tô nền cảnh báo
+        let isZeroGiao = d.is_zero_3bieu || (d.p_giao > 0 && (d.b1_giao + d.b2_giao + d.b3_giao === 0));
+        let isZeroNhan = d.is_zero_3bieu || (d.p_nhan > 0 && (d.b1_nhan + d.b2_nhan + d.b3_nhan === 0)) || Boolean(d.reg_sources_err);
+
+        let zClsGiao = isZeroGiao ? "col-so zero-tariff-cell" : "col-so";
+        let zClsNhan = isZeroNhan ? "col-nhan zero-tariff-cell" : "col-nhan";
+        let tipGiao = isZeroGiao ? "Cảnh báo: P Giao Tổng > 0 nhưng B1, B2, B3 chiều Giao đều bằng 0!" : "";
+        let tipNhan = d.reg_sources_err
+            ? `Lỗi cài đặt Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
+            : (isZeroNhan ? "Cảnh báo: P Nhận Tổng > 0 nhưng B1, B2, B3 chiều Nhận đều bằng 0!" : "");
 
         let tr = document.createElement('tr');
         tr.className = (d.giai_doan === "SAU") ? "row-sau" : "row-truoc";
@@ -1320,13 +1350,13 @@ async function runFullProcess() {
             <td class="col-date">${d.ngay_lap_trinh}</td>
             <td>${d.tu}/${d.ti}</td>
             <td class="col-so">${d.p_giao.toLocaleString('en-US')}</td>
-            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b1_giao.toLocaleString('en-US')}</td>
-            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b2_giao.toLocaleString('en-US')}</td>
-            <td class="${zClsGiao}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b3_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${tipGiao}">${d.b1_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${tipGiao}">${d.b2_giao.toLocaleString('en-US')}</td>
+            <td class="${zClsGiao}" title="${tipGiao}">${d.b3_giao.toLocaleString('en-US')}</td>
             <td class="col-nhan">${d.p_nhan.toLocaleString('en-US')}</td>
-            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b1_nhan.toLocaleString('en-US')}</td>
-            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b2_nhan.toLocaleString('en-US')}</td>
-            <td class="${zClsNhan}" title="${d.is_zero_3bieu ? 'Cảnh báo: B1, B2, B3 đều bằng 0!' : ''}">${d.b3_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${tipNhan}">${d.b1_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${tipNhan}">${d.b2_nhan.toLocaleString('en-US')}</td>
+            <td class="${zClsNhan}" title="${tipNhan}">${d.b3_nhan.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_giao.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_nhan.toLocaleString('en-US')}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T3, isGioDung, d.thuc_te_nt.merged_map, "T3")}</td>
@@ -1373,19 +1403,38 @@ function chayRadarQC() {
     // 2. Quét toàn bộ các file đã nạp
     banGhiHoanThien.forEach(d => {
         let nhanCongTo = (d.serial && d.serial !== "N/A") ? `Công tơ ${d.serial}` : `File chưa rõ Serial`;
-        let sumAll = d.p_giao + d.b1_giao + d.b2_giao + d.b3_giao + d.p_nhan + d.b1_nhan + d.b2_nhan + d.b3_nhan + d.q_giao + d.q_nhan;
-        let sum3Bieu = d.b1_giao + d.b2_giao + d.b3_giao + d.b1_nhan + d.b2_nhan + d.b3_nhan;
+        let sumGiao3Bieu = d.b1_giao + d.b2_giao + d.b3_giao;
+        let sumNhan3Bieu = d.b1_nhan + d.b2_nhan + d.b3_nhan;
+        let sum3Bieu = sumGiao3Bieu + sumNhan3Bieu;
+        let sumAll = d.p_giao + d.p_nhan + d.q_giao + d.q_nhan + sum3Bieu;
 
         // LỖI 1: File PDF xuất thiếu bảng thông số (chỉ in phần Tariff như duc manh.pdf)
         if (d.is_missing_tables) {
             canhBao.push(`📄 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI XUẤT FILE PDF THIẾU THÔNG SỐ!</b> File chỉ có bảng khung giờ biểu giá (Tariff), thiếu hoàn toàn bảng Chỉ số điện năng (Current Values) và Lịch sử lập trình (SL LP & Ngày lập trình). 👉 Yêu cầu xuất lại file đọc đầy đủ!`);
         } else {
-            // LỖI 2 & 3: Toàn bộ chỉ số = 0 HOẶC 3 biểu B1, B2, B3 đều = 0
+            // LỖI 2 & 3 (GIỮ NGUYÊN): Toàn bộ chỉ số = 0 HOẶC cả 6 ô B1, B2, B3 (Giao & Nhận) đều = 0
             if (sumAll === 0) {
                 canhBao.push(`⚠️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
             } else if (sum3Bieu === 0) {
                 canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
+            } else {
+                // LỖI 3B (MỚI): Chiều Giao có P Tổng > 0 nhưng B1, B2, B3 chiều Giao đều = 0
+                if (d.p_giao > 0 && sumGiao3Bieu === 0) {
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Giao) đều bằng 0</b>!`);
+                }
+                // LỖI 3C (MỚI): Chiều Nhận có P Nhận Tổng > 0 nhưng B1, B2, B3 chiều Nhận đều = 0 (Như 5 file A1700 cài nhầm Rate 4..6)
+                if (d.p_nhan > 0 && sumNhan3Bieu === 0) {
+                    let goiY = d.reg_sources_err
+                        ? `Nguyên nhân: Mục <b>Tariff ➔ Register Sources</b> cài sai (${d.reg_sources_err}).`
+                        : `Kiểm tra ngay mục <b>Tariff ➔ Register Sources</b> xem Rate 4, 5, 6 có bị cài nhầm thành <b>Import Wh</b> thay vì <b>Export Wh</b> hay không!`;
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Nhận) đều bằng 0</b>! 👉 ${goiY}`);
+                }
             }
+        }
+
+        // LỖI 3D (MỚI - BẮT TẬN GỐC TRONG TARIFF A1700 NGAY CẢ KHI P NHẬN TỔNG = 0):
+        if (d.reg_sources_err && !(d.p_nhan > 0 && sumNhan3Bieu === 0)) {
+            canhBao.push(`❌ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT NGUỒN THANH GHI (REGISTER SOURCES) TRÊN A1700!</b> Phát hiện: ${d.reg_sources_err}. Chuẩn bắt buộc: <b>Rate 1..3 = Import Wh</b> và <b>Rate 4..6 = Export Wh</b>.`);
         }
 
         // LỖI 4: Cảnh báo công tơ Gelex MCL 305 nhưng trong PDF hiển thị tên GLXME-40mG
@@ -1396,7 +1445,7 @@ function chayRadarQC() {
             canhBao.push(`🏷️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Mã chủng loại trên tên file là <b>305 (Thực tế là công tơ GELEX ME-42 / ME-42mG / ME-42 TC103)</b> nhưng thông tin trong file PDF đang hiển thị tên là <b>${d.ten_cong_to}</b>.`);
         }
 
-        // LỖI 5 (MỚI): Thông báo chi tiết các mốc giờ chia nhỏ đã cộng dồn theo từng biểu T3(TĐ), T1(BT), T2(CĐ)
+        // LỖI 5: Thông báo chi tiết các mốc giờ chia nhỏ đã cộng dồn theo từng biểu T3(TĐ), T1(BT), T2(CĐ)
         let dsGop = d.gop_gio_details || [
             ...((d.thuc_te_nt && d.thuc_te_nt.details && d.thuc_te_nt.details.length) ? [`<b>Thứ 2 ➔ Thứ 7 (DT1):</b> ${d.thuc_te_nt.details.join(" | ")}`] : []),
             ...((d.thuc_te_cn && d.thuc_te_cn.details && d.thuc_te_cn.details.length) ? [`<b>Chủ nhật (DT2):</b> ${d.thuc_te_cn.details.join(" | ")}`] : [])
