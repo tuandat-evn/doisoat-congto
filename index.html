@@ -1012,9 +1012,10 @@ function xuLyFilePsmart(text) {
 // =========================================================================
 // 6. LÕI HHM
 // =========================================================================
+// 6. LÕI HHM
+// =========================================================================
 function xuLyFileHhm(text) {
     let clean = text.replace(/"/g, '');
-    let compact = text.replace(/[\s\,"']+/g, '');
 
     let loaiM = clean.match(/công tơ:\s*([A-Z0-9\-]+)/i);
     let soM = clean.match(/S[ôố] chế tạo:\s*(\d+)/i);
@@ -1054,9 +1055,13 @@ function xuLyFileHhm(text) {
     let thucTeCn = groupToDict(dtGroups[1] || []);
 
     const getIdx = (obis, unit) => {
-        let r = new RegExp(obis.replace(/\./g, '\\.') + '[^Wv]*?(\\d+)' + unit, 'i');
-        let mt = compact.match(r);
-        return mt ? Math.trunc(parseFloat(mt[1]) / 1000) : 0;
+        // Bắt chính xác con số đứng sau OBIS (và sau nhãn T1/T2/T3 nếu có), trước đơn vị Wh/varh
+        let obisEsc = obis.replace(/\./g, '\\.');
+        let r = new RegExp(`(?:^|[^0-9.])${obisEsc}(?:\\s*[^0-9\\n]*?(?:T[1234])?)?\\s+(\\d[\\d.,]*)\\s*${unit}\\b`, 'i');
+        let mt = clean.match(r);
+        if (!mt) return 0;
+        let rawNum = mt[1].replace(/[\.,]/g, '');
+        return Math.trunc(parseFloat(rawNum) / 1000);
     };
 
     return {
@@ -1075,23 +1080,41 @@ function xuLyFileHhm(text) {
 // =========================================================================
 // 7. LÕI VINASINO
 // =========================================================================
+// 7. LÕI VINASINO (HỖ TRỢ CẢ MẪU BẢNG 1/2 & MẪU NBG MÙA 1)
+// =========================================================================
 function phanTichKhungGioVinasino(block) {
-    let res = { T1: [], T2: [], T3: [] };
-    if (!block) return res;
-    let reg = /(\d{2}:\d{2})[\s\n]+(\d{2}:\d{2})[\s\n]+0?([123])/g;
+    let rawRes = { T1: [], T2: [], T3: [] };
+    if (!block) return { T1: [], T2: [], T3: [], merged_map: {}, details: [] };
+    let reg = /(\d{2}:\d{2})[\s\n|]+(\d{2}:\d{2})[\s\n|]+0?([123])\b/g;
     let m;
     while ((m = reg.exec(block)) !== null) {
         let t1 = m[1], t2 = m[2], tf = 'T' + m[3];
         let start, end;
-        if (t2 === '00:00') { start = t1; end = '24:00'; }
-        else if (t1 === '00:00') {
+        if (t1 === '00:00' && t2 === '06:00') {
+            // Trên VSE3T-5: nếu biểu 3 là 00:00-06:00, còn nếu biểu 1 ở ngày nghỉ bị đảo cột (Tg kết thúc 00:00 đứng trước Tg bắt đầu 06:00) thì là 06:00-24:00
+            if (tf === 'T1') { start = '06:00'; end = '24:00'; }
+            else { start = '00:00'; end = '06:00'; }
+        } else if (t1 === '06:00' && t2 === '00:00') {
+            if (tf === 'T3') { start = '00:00'; end = '06:00'; }
+            else { start = '06:00'; end = '24:00'; }
+        } else if (t2 === '00:00') {
+            start = t1; end = '24:00';
+        } else if (t1 === '00:00') {
             if (parseInt(t2.slice(0,2), 10) > 12) { start = t2; end = '24:00'; }
             else { start = '00:00'; end = t2; }
-        } else { start = t1; end = t2; }
-        if (start !== end && !res[tf].includes(`${start}-${end}`)) res[tf].push(`${start}-${end}`);
+        } else {
+            // Đảm bảo start < end nếu PDF bị đảo cột Tg kết thúc lên trước Tg bắt đầu
+            let m1 = parseInt(t1.slice(0,2), 10) * 60 + parseInt(t1.slice(3,5), 10);
+            let m2 = parseInt(t2.slice(0,2), 10) * 60 + parseInt(t2.slice(3,5), 10);
+            if (m1 < m2) { start = t1; end = t2; }
+            else { start = t2; end = t1; }
+        }
+        if (start !== end && !rawRes[tf].includes(`${start}-${end}`)) {
+            rawRes[tf].push(`${start}-${end}`);
+        }
     }
-    res.T1.sort(); res.T2.sort(); res.T3.sort();
-    return res;
+    rawRes.T1.sort(); rawRes.T2.sort(); rawRes.T3.sort();
+    return typeof gopKhungGioLienKe === "function" ? gopKhungGioLienKe(rawRes) : rawRes;
 }
 
 function xuLyFileVinasino(text) {
@@ -1099,7 +1122,7 @@ function xuLyFileVinasino(text) {
     let compact = clean.replace(/[\r\n]+/g, ' ');
 
     let loaiM = clean.match(/Công tơ.*?(VSE[\w\-]+)/i);
-    let soM = clean.match(/ID Công tơ:\s*0*(\d+)/i);
+    let soM = clean.match(/ID Công tơ[\s.:]*0*(\d+)/i);
     let slM = compact.match(/Ghi nhận sự kiện cài đặt.*?(\d+)\s*\(lần\)/i);
     let tgM = compact.match(/Ghi nhận sự kiện cài đặt.*?(?:(\d{2}\/\d{2}\/\d{4})\s*(\d{2}:\d{2})|(\d{2}:\d{2})\s*(\d{2}\/\d{2}\/\d{4}))/i);
     let ngayLt = "N/A";
@@ -1107,30 +1130,42 @@ function xuLyFileVinasino(text) {
         ngayLt = tgM[1] ? `${tgM[1]} ${tgM[2]}:00` : `${tgM[4]} ${tgM[3]}:00`;
     }
 
-    let bNt = clean.match(/Bảng BG ngày thường \(bảng 1\)([\s\S]*?)Bảng BG ngày thường \(bảng 2\)/i);
-    let bCn = clean.match(/Bảng BG ngày thường \(bảng 2\)([\s\S]*)/i);
+    // Hỗ trợ cả mẫu "Bảng BG ngày thường (bảng 1/2)" và mẫu "Biểu giá ngày thường/nghỉ mùa 1"
+    let bNt = clean.match(/(?:Bảng BG ngày thường \(bảng 1\)|Biểu giá ngày thường mùa \d+\.?)([\s\S]*?)(?:Bảng BG ngày thường \(bảng 2\)|Biểu giá ngày nghỉ mùa \d+\.?)/i);
+    let bCn = clean.match(/(?:Bảng BG ngày thường \(bảng 2\)|Biểu giá ngày nghỉ mùa \d+\.?)([\s\S]*?)(?:Cài đặt biểu giá mùa|Cài đặt ngày nghỉ|Hệ số nhân|Ghi nhận sự kiện|$)/i);
     let thucTeNt = phanTichKhungGioVinasino(bNt ? bNt[1] : "");
     let thucTeCn = phanTichKhungGioVinasino(bCn ? bCn[1] : "");
 
-    const getIdx = (kw) => {
-        let r = new RegExp(kw + '.*?([\\d\\.]+)\\s*k[VvWw]', 'i');
+    const getIdx = (regexStr) => {
+        let r = new RegExp(regexStr + '[^0-9\\n]*?(\\d+(?:\\.\\d+)?)\\s*k[VvWw]', 'i');
         let mt = compact.match(r);
         return mt ? Math.trunc(parseFloat(mt[1])) : 0;
     };
+
+    let isTt16 = arrEqual(thucTeNt.T1, TT16_T1) && arrEqual(thucTeNt.T2, TT16_T2) && arrEqual(thucTeNt.T3, TT16_T3) &&
+                 (!thucTeCn.T1.length || (arrEqual(thucTeCn.T1, TT16_CN_T1) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, TT16_CN_T3)));
+    let isTt60 = arrEqual(thucTeNt.T1, TT60_T1) && arrEqual(thucTeNt.T2, TT60_T2) && arrEqual(thucTeNt.T3, TT60_T3) &&
+                 (!thucTeCn.T1.length || (arrEqual(thucTeCn.T1, TT60_CN_T1) && arrEqual(thucTeCn.T2, []) && arrEqual(thucTeCn.T3, TT60_CN_T3)));
 
     return {
         ten_cong_to: loaiM ? `VINASINO (${loaiM[1].toUpperCase()})` : "VINASINO",
         serial: soM ? soM[1] : "N/A", tu: "1.0", ti: "1.0",
         lan_cai_dat: slM ? parseInt(slM[1], 10) : 0, ngay_lap_trinh: ngayLt,
-        p_giao: getIdx('hữu công giao tổng'), b1_giao: getIdx('hữu công giao 1'), b2_giao: getIdx('hữu công giao 2'), b3_giao: getIdx('hữu công giao 3'),
-        p_nhan: getIdx('hữu công nhận tổng'), b1_nhan: getIdx('hữu công nhận 1'), b2_nhan: getIdx('hữu công nhận 2'), b3_nhan: getIdx('hữu công nhận 3'),
-        q_giao: getIdx('vô công giao tổng'), q_nhan: getIdx('vô công nhận tổng'),
-        is_tt16: arrEqual(thucTeNt.T1, TT16_T1) && arrEqual(thucTeNt.T2, TT16_T2) && arrEqual(thucTeNt.T3, TT16_T3),
-        is_tt60: arrEqual(thucTeNt.T1, TT60_T1) && arrEqual(thucTeNt.T2, TT60_T2) && arrEqual(thucTeNt.T3, TT60_T3),
+        p_giao: getIdx('hữu công giao tổng'),
+        b1_giao: getIdx('hữu công giao (?:biểu giá )?1\\b'),
+        b2_giao: getIdx('hữu công giao (?:biểu giá )?2\\b'),
+        b3_giao: getIdx('hữu công giao (?:biểu giá )?3\\b'),
+        p_nhan: getIdx('hữu công nhận tổng'),
+        b1_nhan: getIdx('hữu công nhận (?:biểu giá )?1\\b'),
+        b2_nhan: getIdx('hữu công nhận (?:biểu giá )?2\\b'),
+        b3_nhan: getIdx('hữu công nhận (?:biểu giá )?3\\b'),
+        q_giao: getIdx('vô công giao tổng'),
+        q_nhan: getIdx('vô công nhận tổng'),
+        is_tt16: isTt16,
+        is_tt60: isTt60,
         thuc_te_nt: thucTeNt, thuc_te_cn: thucTeCn
     };
 }
-
 // =========================================================================
 // NHẬN DIỆN TÊN FILE (TRUOC / SAU / ĐUÔI L1)
 // =========================================================================
