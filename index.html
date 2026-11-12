@@ -741,6 +741,8 @@ function xuLyFileElster(pdfObj, fileName = "") {
 // =========================================================================
 // 2. LÕI GELEX ME (HỖ TRỢ CẢ MẪU 304 NGÀY 1/2 & MẪU 305 DT1/DT2 + CỘNG DỒN MỐC DƯ)
 // =========================================================================
+// 2. LÕI GELEX ME & CE-14 (HỖ TRỢ MẪU 304, 305 & 1 PHA 101 CE-14 + CỘNG DỒN MỐC DƯ)
+// =========================================================================
 function phanTichKhungGioGelex(textDay) {
     let ketQua = { T1: [], T2: [], T3: [], merged_map: {}, details: [] };
     if (!textDay) return ketQua;
@@ -755,6 +757,9 @@ function phanTichKhungGioGelex(textDay) {
         mocGio.push({ time: m[1], bieu: m[2] });
     }
     if (mocGio.length === 0) return ketQua;
+
+    // Sắp xếp các mốc giờ theo thứ tự thời gian tăng dần (xử lý lỗi nhảy cột PDF ở mẫu 101 CE-14)
+    mocGio.sort((a, b) => a.time.localeCompare(b.time));
 
     // Bước 1: Tạo các đoạn giờ thô ban đầu
     let rawSegs = [];
@@ -805,15 +810,27 @@ function phanTichKhungGioGelex(textDay) {
 }
 
 function xuLyFileGelex(text) {
-    let soM = text.match(/Số\s*SX:\s*(\d+)/i) || text.match(/Số\s*hiệu\s*sản[\s\S]{1,40}?(\d{7,12})/i);
+    let soM = text.match(/Số\s*SX:\s*0*(\d+)/i) || text.match(/Số\s*hiệu\s*sản\s*xuất[\s\S]{1,40}?\b0*(\d{7,12})\b/i);
     let tenM = text.match(/Tên\s*công\s*tơ[\s|:\n]*([A-Za-z0-9\-]+)/i);
-    let slM = text.match(/Số\s*lần\s*lập\s*trình[\s|:\n]*(\d+)/i);
-    let tgM = text.match(/Thời\s*gian\s*lập\s*trình\s*cuối[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
-           || text.match(/Số\s*SX:\s*\d+[:\s]*Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)/i)
-           || text.match(/Thời\s*gian\s*thực[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
-           || text.match(/Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i);
+    let isCe14 = /0\.0\.C\.1\.0|D285M42|1\.0\.1\.8\.0/i.test(text);
+    let tenCongTo = tenM ? tenM[1].trim() : (isCe14 ? "GELEX CE-14" : "GELEX");
 
-    // Tự động bắt cả mẫu cũ (Ngày 1 / Ngày 2) lẫn mẫu mới 305 (DT1 / DT2 bị ngắt trang)
+    let slM = text.match(/Số\s*lần\s*lập\s*trình[\s|:\n]*(\d+)/i);
+
+    // Hỗ trợ định dạng YY-MM-DD HH:mm của dòng 1 pha CE-14 ("Thời gian lập trình lần cuối | 26-11-12 11:33")
+    let ngayLapTrinh = "N/A";
+    let tgCe14M = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s|:\n]*(\d{2})-(\d{2})-(\d{2})\s+(\d{1,2}:\d{2}(?::\d{2})?)/i);
+    if (tgCe14M) {
+        ngayLapTrinh = `${tgCe14M[3]}/${tgCe14M[2]}/20${tgCe14M[1]} ${tgCe14M[4]}`;
+    } else {
+        let tgM = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
+               || text.match(/Số\s*SX:\s*\d+[:\s]*Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)/i)
+               || text.match(/Thời\s*gian\s*thực[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
+               || text.match(/Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i);
+        if (tgM) ngayLapTrinh = tgM[1].trim();
+    }
+
+    // Tự động bắt cả mẫu 304 (Ngày 1/2), mẫu 305 (Biểu giá theo ngày DT1/DT2) và mẫu 101 CE-14 (Cấu hình biểu giá ngày DT1/DT2)
     let strNgay1 = "", strNgay2 = "";
     let mNgay1 = text.match(/Ngày 1\s*([\s\S]*?)(?:\n\s*Ngày 2|$)/i);
     let mNgay2 = text.match(/Ngày 2\s*([\s\S]*?)(?:\n\s*Cấu hình tuần|$)/i);
@@ -822,8 +839,8 @@ function xuLyFileGelex(text) {
         strNgay1 = mNgay1[1];
         strNgay2 = mNgay2 ? mNgay2[1] : "";
     } else {
-        let mDt1 = text.match(/Biểu giá theo ngày[\s\S]*?DT0?1\b([\s\S]*?)(?:\bDT0?2\b|Biểu giá theo tuần|$)/i);
-        let mDt2 = text.match(/\bDT0?2\b([\s\S]*?)(?:Biểu giá theo tuần|Cấu hình tuần|$)/i);
+        let mDt1 = text.match(/(?:Biểu giá theo ngày|Cấu hình biểu giá ngày)[\s\S]*?\bDT0?1\b([\s\S]*?)(?:\bDT0?2\b|Biểu giá theo tuần|Cấu hình tuần|$)/i);
+        let mDt2 = text.match(/\bDT0?2\b([\s\S]*?)(?:Biểu giá theo tuần|Cấu hình tuần|Kiểu ngày|$)/i);
         strNgay1 = mDt1 ? mDt1[1] : "";
         strNgay2 = mDt2 ? mDt2[1] : "";
     }
@@ -832,7 +849,7 @@ function xuLyFileGelex(text) {
     let thucTeCn = phanTichKhungGioGelex(strNgay2);
 
     const getObis = (obis) => {
-        let reg = new RegExp(obis + "[\\s\\S]*?([\\d\\.,]+)\\s*(?:kWh|kvarh)", "i");
+        let reg = new RegExp(`(?:1\\.0\\.)?${obis}\\b[^\\n]*?(\\d[\\d\\.,]*)\\s*(?:kWh|kvarh)`, "i");
         let m = text.match(reg);
         if (!m) return 0;
         let v = parseFloat(m[1].replace(/,/g, ''));
@@ -858,11 +875,11 @@ function xuLyFileGelex(text) {
     }
 
     return {
-        ten_cong_to: tenM ? tenM[1].trim() : "GELEX",
+        ten_cong_to: tenCongTo,
         serial: soM ? soM[1].trim() : "N/A",
         tu: "1.0", ti: "1.0",
         lan_cai_dat: slM ? parseInt(slM[1], 10) : 0,
-        ngay_lap_trinh: tgM ? tgM[1].trim() : "N/A",
+        ngay_lap_trinh: ngayLapTrinh,
         p_giao: getObis("1\\.8\\.0"), b1_giao: getObis("1\\.8\\.1"), b2_giao: getObis("1\\.8\\.2"), b3_giao: getObis("1\\.8\\.3"),
         p_nhan: getObis("2\\.8\\.0"), b1_nhan: getObis("2\\.8\\.1"), b2_nhan: getObis("2\\.8\\.2"), b3_nhan: getObis("2\\.8\\.3"),
         q_giao: getObis("3\\.8\\.0"), q_nhan: getObis("4\\.8\\.0"),
