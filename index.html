@@ -267,6 +267,34 @@
         .row-sau .badge-dat-sau { background-color: #16a34a !important; color: #ffffff !important; border: 1.5px solid #15803d !important; font-weight: 800 !important; box-shadow: 0 2px 5px rgba(22, 163, 74, 0.35) !important; }
     /* Thẻ màu Vàng Hổ Phách cho các khoảng giờ ĐẠT nhờ cộng dồn (gộp mốc) */
         .tag-amber { display: inline-block; background-color: #fef3c7 !important; color: #b45309 !important; border: 1.5px solid #f59e0b !important; padding: 2px 7px; border-radius: 5px; font-weight: 700 !important; font-size: 11px; margin: 1px 0; cursor: help; box-shadow: 0 1px 2px rgba(245, 158, 11, 0.15); }
+    /* TỐI ƯU HIỂN THỊ CẶP CÔNG TƠ TRƯỚC/SAU & THƯỚC NGẮM DÒNG DÀI */
+        .custom-table tbody tr.row-truoc td {
+            background-color: #ffffff !important;
+        }
+        .custom-table tbody tr.row-sau td {
+            background-color: #f0fdf4 !important; /* Xanh mint dịu xuyên suốt cả hàng SAU */
+        }
+        .custom-table tbody tr.row-sau td:first-child {
+            border-left: 4px solid #16a34a !important; /* Vạch đánh dấu dòng SAU ở đầu hàng */
+        }
+        /* Đường kẻ mảnh nét đứt nối giữa TRƯỚC và SAU của cùng 1 công tơ */
+        .custom-table tbody tr.pair-inner-row td {
+            border-bottom: 1px dashed #cbd5e1 !important;
+        }
+        /* Vạch kẻ đậm tách biệt giữa công tơ này với công tơ tiếp theo */
+        .custom-table tbody tr.pair-end-row td {
+            border-bottom: 2.5px solid #475569 !important;
+        }
+        /* Thước ngắm sáng toàn hàng khi di chuột vào bất kỳ ô nào */
+        .custom-table tbody tr:hover td {
+            background-color: #fef9c3 !important;
+            transition: background-color 0.08s ease;
+        }
+        /* Giữ nguyên màu cảnh báo đỏ cho các ô Lệch P / Sai Tariff ngay cả trên nền xanh */
+        .custom-table tbody tr td.zero-tariff-cell {
+            background-color: #fee2e2 !important;
+            color: #dc2626 !important;
+        }
     </style>
 </head>
 <body>
@@ -1470,8 +1498,13 @@ async function runFullProcess() {
         let tipDiffGiao = `|P Giao Tổng (${d.p_giao.toLocaleString('en-US')}) - (B1+B2+B3 = ${sumGiao.toLocaleString('en-US')})| = ${diffGiao.toLocaleString('en-US')} kWh ${isDiffGiaoBad ? '(LỖI > 2 kWh hoặc sai Tariff!)' : '(Hợp lệ ≤ 2 kWh)'}`;
         let tipDiffNhan = `|P Nhận Tổng (${d.p_nhan.toLocaleString('en-US')}) - (B1+B2+B3 = ${sumNhan.toLocaleString('en-US')})| = ${diffNhan.toLocaleString('en-US')} kWh ${isDiffNhanBad ? '(LỖI > 2 kWh hoặc sai Tariff!)' : '(Hợp lệ ≤ 2 kWh)'}`;
 
+        // Kiểm tra dòng tiếp theo có cùng Serial công tơ hay sang công tơ mới để kẻ vạch đậm
+        let nextRec = banGhiHoanThien[idx + 1];
+        let isSameMeterNext = Boolean(nextRec && d.serial && d.serial !== "N/A" && nextRec.serial === d.serial);
+        let borderPairCls = isSameMeterNext ? "pair-inner-row" : "pair-end-row";
+
         let tr = document.createElement('tr');
-        tr.className = (d.giai_doan === "SAU") ? "row-sau" : "row-truoc";
+        tr.className = `${(d.giai_doan === "SAU") ? "row-sau" : "row-truoc"} ${borderPairCls}`;
         let gioTdCls = (d.giai_doan === "SAU") ? "col-gio-sau" : "";
         let finalBadgeCls = isGioDung ? `${badgeCls} ${d.giai_doan === "SAU" ? "badge-dat-sau" : "badge-dat-truoc"}` : badgeCls;
         tr.innerHTML = `
