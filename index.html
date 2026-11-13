@@ -297,7 +297,9 @@
             </button>
         </div>
         <div style="font-size: 12px; font-weight: 700; color: #475569;">
-            📞 Hỗ trợ kỹ thuật X5: <a href="tel:0985325681" style="color: #16a34a; text-decoration: none;">098 5325681</a>
+            📞 Hỗ trợ KT cài cto X5: <a href="tel:0985325681" style="color: #16a34a; text-decoration: none;">098 5325681</a>
+            <span style="margin: 0 8px; color: #cbd5e1;">|</span>
+            📞 Hỗ trợ sử dụng Tool: <a href="tel:0966966658" style="color: #2563eb; text-decoration: none;">0966966658</a>
         </div>
     </div>
 
@@ -398,7 +400,7 @@
                 </button>
             </div>
 
-            <!-- BẢNG ĐỐI SOÁT 24 CỘT -->
+            <!-- BẢNG ĐỐI SOÁT 26 CỘT (THÊM 2 CỘT LỆCH P GIAO & LỆCH P NHẬN) -->
             <div class="table-wrap">
                 <table class="custom-table">
                     <thead>
@@ -412,6 +414,7 @@
                             <th colspan="4">P GIAO (kWh)</th>
                             <th colspan="4">P NHẬN (kWh)</th>
                             <th colspan="2">VÔ CÔNG (kVArh)</th>
+                            <th colspan="2">LỆCH P TỔNG (kWh)</th>
                             <th colspan="3">THỨ 2 -> THỨ 7 (DT1)</th>
                             <th colspan="2">CHỦ NHẬT (DT2)</th>
                             <th rowspan="2">KẾT QUẢ<br>ĐỐI SOÁT</th>
@@ -421,6 +424,7 @@
                             <th>TỔNG</th><th>B1</th><th>B2</th><th>B3</th>
                             <th>TỔNG</th><th>B1</th><th>B2</th><th>B3</th>
                             <th>Q GIAO</th><th>Q NHẬN</th>
+                            <th>LỆCH GIAO</th><th>LỆCH NHẬN</th>
                             <th>T3 (TĐ)</th><th>T1 (BT)</th><th>T2 (CĐ)</th><th>T3 (TĐ)</th><th>T1 (BT)</th>
                         </tr>
                     </thead>
@@ -429,7 +433,6 @@
             </div>
         </div>
     </div>
-
     <!-- ========================================================================= -->
     <!-- TAB 2: CẨM NANG XỬ LÝ LỖI CÔNG TƠ 3 GIÁ (TT60)                            -->
     <!-- ========================================================================= -->
@@ -818,16 +821,24 @@ function xuLyFileGelex(text) {
     let slM = text.match(/Số\s*lần\s*lập\s*trình[\s|:\n]*(\d+)/i);
 
     // Hỗ trợ định dạng YY-MM-DD HH:mm của dòng 1 pha CE-14 ("Thời gian lập trình lần cuối | 26-11-12 11:33")
-    let ngayLapTrinh = "N/A";
-    let tgCe14M = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s|:\n]*(\d{2})-(\d{2})-(\d{2})\s+(\d{1,2}:\d{2}(?::\d{2})?)/i);
+    // Chỉ lấy đúng mục "Thời gian lập trình (lần) cuối", hỗ trợ cả 1 hoặc 2 chữ số cho Ngày/Tháng/Giờ/Phút/Giây
+    let ngayLapTrinh = "Không có";
+    let tgCe14M = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s|:\n]*(\d{2})-(\d{2})-(\d{2})\s+(\d{1,2}:\d{1,2}(?::\d{1,2})?)/i);
     if (tgCe14M) {
-        ngayLapTrinh = `${tgCe14M[3]}/${tgCe14M[2]}/20${tgCe14M[1]} ${tgCe14M[4]}`;
+        let tParts = tgCe14M[4].split(':').map(p => p.padStart(2, '0')).join(':');
+        ngayLapTrinh = `${tgCe14M[3]}/${tgCe14M[2]}/20${tgCe14M[1]} ${tParts}`;
     } else {
-        let tgM = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
-               || text.match(/Số\s*SX:\s*\d+[:\s]*Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?)/i)
-               || text.match(/Thời\s*gian\s*thực[\s|:\n]*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i)
-               || text.match(/Thời\s*gian:\s*(\d{2}\/\d{2}\/\d{4}\s+\d{1,2}:\d{2}(?::\d{2})?(?:\s*(?:AM|PM|SA|CH))?)/i);
-        if (tgM) ngayLapTrinh = tgM[1].trim();
+        let tgM = text.match(/Thời\s*gian\s*lập\s*trình\s*(?:lần\s*)?cuối[\s\S]{1,40}?(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?(?:\s*(AM|PM|SA|CH))?/i);
+        if (tgM) {
+            let dd = tgM[1].padStart(2, '0');
+            let mm = tgM[2].padStart(2, '0');
+            let yyyy = tgM[3];
+            let hh = tgM[4].padStart(2, '0');
+            let mi = tgM[5].padStart(2, '0');
+            let ss = tgM[6] ? `:${tgM[6].padStart(2, '0')}` : "";
+            let ampm = tgM[7] ? ` ${tgM[7].toUpperCase()}` : "";
+            ngayLapTrinh = `${dd}/${mm}/${yyyy} ${hh}:${mi}${ss}${ampm}`;
+        }
     }
 
     // Tự động bắt cả mẫu 304 (Ngày 1/2), mẫu 305 (Biểu giá theo ngày DT1/DT2) và mẫu 101 CE-14 (Cấu hình biểu giá ngày DT1/DT2)
@@ -1386,14 +1397,12 @@ async function runFullProcess() {
         let diffGiao = Math.abs(d.p_giao - sumGiao);
         let diffNhan = Math.abs(d.p_nhan - sumNhan);
 
-        // Chiều Giao: Báo lỗi tô màu nếu cài sai nguồn Rate 1..3 HOẶC lệch > 2 kWh (khi P Giao > 0 mà 3 biểu = 0 hoặc lệch lớn)
         let hasErrRateGiao = Boolean(d.reg_sources_err && /Rate\s*[123]/i.test(d.reg_sources_err));
         let hasErrRateNhan = Boolean(d.reg_sources_err && /Rate\s*[456]/i.test(d.reg_sources_err));
 
         let isZeroGiaoErr = d.is_zero_3bieu || hasErrRateGiao || (d.p_giao > 0 && sumGiao === 0 && diffGiao > 2) || (diffGiao > 2);
         let isZeroGiaoOk  = !isZeroGiaoErr && (d.p_giao > 0 && sumGiao === 0 && diffGiao <= 2);
 
-        // Chiều Nhận: Nếu Tariff đúng quy định (!hasErrRateNhan) và độ lệch <= 2 kWh thì HỢP LỆ (không tô cam báo lỗi)
         let isZeroNhanErr = d.is_zero_3bieu || hasErrRateNhan || (d.p_nhan > 0 && sumNhan === 0 && diffNhan > 2) || (diffNhan > 2);
         let isZeroNhanOk  = !isZeroNhanErr && (d.p_nhan > 0 && sumNhan === 0 && diffNhan <= 2);
 
@@ -1404,13 +1413,28 @@ async function runFullProcess() {
             ? `Lỗi cài đặt Tariff ➔ Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
             : (isZeroGiaoErr
                 ? `Cảnh báo: P Giao Tổng (${d.p_giao}) lệch ${diffGiao} kWh (> 2 kWh) so với tổng 3 biểu Giao (${sumGiao})!`
-                : (isZeroGiaoOk ? `Hợp lệ: Lệch ${diffGiao} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi, mục Tariff đúng quy định.` : ""));
+                : (isZeroGiaoOk ? `Hợp lệ: Lệch ${diffGiao} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh), mục Tariff đúng quy định.` : ""));
 
         let tipNhan = hasErrRateNhan
             ? `Lỗi cài đặt Tariff ➔ Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
             : (isZeroNhanErr
                 ? `Cảnh báo: P Nhận Tổng (${d.p_nhan}) lệch ${diffNhan} kWh (> 2 kWh) so với tổng 3 biểu Nhận (${sumNhan})!`
-                : (isZeroNhanOk ? `Hợp lệ: Lệch ${diffNhan} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi, mục Tariff đúng quy định.` : ""));
+                : (isZeroNhanOk ? `Hợp lệ: Lệch ${diffNhan} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh), mục Tariff đúng quy định.` : ""));
+
+        // Định dạng 2 cột Lệch P Giao & Lệch P Nhận: Lệch > 2 kWh hoặc sai nguồn Tariff thì tô đỏ cảnh báo
+        let isDiffGiaoBad = diffGiao > 2 || hasErrRateGiao;
+        let isDiffNhanBad = diffNhan > 2 || hasErrRateNhan;
+        let styleDiffGiao = isDiffGiaoBad
+            ? 'background:#fee2e2; color:#dc2626; font-weight:800; border:1px solid #f87171;'
+            : (diffGiao > 0 ? 'color:#0284c7; font-weight:700;' : 'color:#64748b;');
+        let styleDiffNhan = isDiffNhanBad
+            ? 'background:#fee2e2; color:#dc2626; font-weight:800; border:1px solid #f87171;'
+            : (diffNhan > 0 ? 'color:#0284c7; font-weight:700;' : 'color:#64748b;');
+
+        let txtDiffGiao = isDiffGiaoBad ? `⚠️ ${diffGiao.toLocaleString('en-US')}` : diffGiao.toLocaleString('en-US');
+        let txtDiffNhan = isDiffNhanBad ? `⚠️ ${diffNhan.toLocaleString('en-US')}` : diffNhan.toLocaleString('en-US');
+        let tipDiffGiao = `|P Giao Tổng (${d.p_giao.toLocaleString('en-US')}) - (B1+B2+B3 = ${sumGiao.toLocaleString('en-US')})| = ${diffGiao.toLocaleString('en-US')} kWh ${isDiffGiaoBad ? '(LỖI > 2 kWh hoặc sai Tariff!)' : '(Hợp lệ ≤ 2 kWh)'}`;
+        let tipDiffNhan = `|P Nhận Tổng (${d.p_nhan.toLocaleString('en-US')}) - (B1+B2+B3 = ${sumNhan.toLocaleString('en-US')})| = ${diffNhan.toLocaleString('en-US')} kWh ${isDiffNhanBad ? '(LỖI > 2 kWh hoặc sai Tariff!)' : '(Hợp lệ ≤ 2 kWh)'}`;
 
         let tr = document.createElement('tr');
         tr.className = (d.giai_doan === "SAU") ? "row-sau" : "row-truoc";
@@ -1435,6 +1459,8 @@ async function runFullProcess() {
             <td class="${zClsNhan}" title="${tipNhan}">${d.b3_nhan.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_giao.toLocaleString('en-US')}</td>
             <td class="col-so">${d.q_nhan.toLocaleString('en-US')}</td>
+            <td class="col-so" style="${styleDiffGiao}" title="${tipDiffGiao}">${txtDiffGiao}</td>
+            <td class="col-so" style="${styleDiffNhan}" title="${tipDiffNhan}">${txtDiffNhan}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T3, isGioDung, d.thuc_te_nt.merged_map, "T3")}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T1, isGioDung, d.thuc_te_nt.merged_map, "T1")}</td>
             <td class="${gioTdCls}">${taoChuoiGio(d.thuc_te_nt.T2, isGioDung, d.thuc_te_nt.merged_map, "T2")}</td>
@@ -1472,13 +1498,14 @@ function chayRadarQC() {
         let dSa = files.find(x => x.giai_doan === "SAU");
 
         if (dTr && dSa && (dSa.lan_cai_dat > dTr.lan_cai_dat + 1)) {
-            canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (Trước: ${dTr.lan_cai_dat} ➡️ Sau: ${dSa.lan_cai_dat}).`);
+            canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (File trước cài: ${dTr.lan_cai_dat} ➡️ File sau cài: ${dSa.lan_cai_dat}).`);
         }
     });
 
-    // 2. Quét toàn bộ các file đã nạp (Áp dụng cho cả TRƯỚC và SAU)
+    // 2. Quét toàn bộ các file đã nạp (Áp dụng cho cả File trước cài và File sau cài)
     banGhiHoanThien.forEach(d => {
         let nhanCongTo = (d.serial && d.serial !== "N/A") ? `Công tơ ${d.serial}` : `File chưa rõ Serial`;
+        let tenFileGiaiDoan = (d.giai_doan === "SAU") ? "File sau cài" : (d.giai_doan === "TRƯỚC" ? "File trước cài" : "File chưa rõ giai đoạn");
         let sumGiao3Bieu = d.b1_giao + d.b2_giao + d.b3_giao;
         let sumNhan3Bieu = d.b1_nhan + d.b2_nhan + d.b3_nhan;
         let sum3Bieu = sumGiao3Bieu + sumNhan3Bieu;
@@ -1488,55 +1515,54 @@ function chayRadarQC() {
 
         // LỖI 1: File PDF xuất thiếu bảng thông số (chỉ in phần Tariff như duc manh.pdf)
         if (d.is_missing_tables) {
-            canhBao.push(`📄 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI XUẤT FILE PDF THIẾU THÔNG SỐ!</b> File chỉ có bảng khung giờ biểu giá (Tariff), thiếu hoàn toàn bảng Chỉ số điện năng (Current Values) và Lịch sử lập trình (SL LP & Ngày lập trình). 👉 Yêu cầu xuất lại file đọc đầy đủ!`);
+            canhBao.push(`📄 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}): LỖI XUẤT FILE PDF THIẾU THÔNG SỐ!</b> File chỉ có bảng biểu giá (Tariff), thiếu bảng Chỉ số (Current Values) và Lịch sử lập trình. 👉 Yêu cầu xuất lại file đọc đầy đủ!`);
         } else {
             // LỖI 2 & 3: Toàn bộ chỉ số = 0 HOẶC cả 6 ô B1, B2, B3 (Giao & Nhận) đều = 0
             if (sumAll === 0) {
-                canhBao.push(`⚠️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
+                canhBao.push(`⚠️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
             } else if (sum3Bieu === 0 && (d.p_giao > 2 || d.p_nhan > 2 || Boolean(d.reg_sources_err))) {
-                canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
+                canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). 👉 Kiểm tra lại ngay!`);
             } else {
-                // KIỂM TRA CHIỀU GIAO (Áp dụng cả TRƯỚC và SAU)
+                // KIỂM TRA CHIỀU GIAO
                 let errRateGiao = Boolean(d.reg_sources_err && /Rate\s*[123]/i.test(d.reg_sources_err));
                 if (errRateGiao) {
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT TARIFF CHIỀU GIAO!</b> Mục <b>Tariff ➔ Register Sources</b> đang cài nhầm (${d.reg_sources_err}). 👉 <b>Yêu cầu kiểm tra và cài đặt lại ngay!</b>`);
+                    canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}): LỖI TARIFF CHIỀU GIAO!</b> Mục <b>Tariff ➔ Register Sources</b> cài nhầm (${d.reg_sources_err}). 👉 <b>Kiểm tra cài đặt lại ngay!</b>`);
                 } else if (d.p_giao > 0 && sumGiao3Bieu === 0) {
                     if (diffGiao <= 2) {
-                        canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao} kWh</b>, 3 biểu <b>B1, B2, B3 = 0</b> (Lệch <b>${diffGiao} kWh ≤ 2 kWh</b>). Mục <b>Tariff</b> đã cài đúng quy định, độ lệch chỉ do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ / CHẤP NHẬN ĐƯỢC!</b>`);
+                        canhBao.push(`ℹ️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> P Giao Tổng = <b>${d.p_giao} kWh</b>, B1..B3 = <b>0</b> (Lệch <b>${diffGiao} kWh ≤ 2 kWh</b>). Mục <b>Tariff</b> đúng quy định, lệch do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ!</b>`);
                     } else {
-                        canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Giao) đều bằng 0</b> (Lệch <b>${diffGiao.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                        canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> P Giao Tổng = <b>${d.p_giao.toLocaleString('en-US')} kWh</b> nhưng B1..B3 (Giao) = <b>0</b> (Lệch <b>${diffGiao.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Kiểm tra lại ngay!</b>`);
                     }
                 } else if (diffGiao > 2) {
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Tổng 3 biểu chiều Giao (<b>${sumGiao3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffGiao.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Giao Tổng (<b>${d.p_giao.toLocaleString('en-US')} kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                    canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Tổng 3 biểu Giao (<b>${sumGiao3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffGiao.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Giao Tổng (<b>${d.p_giao.toLocaleString('en-US')} kWh</b>)! 👉 <b>Kiểm tra lại ngay!</b>`);
                 }
 
-                // KIỂM TRA CHIỀU NHẬN (Áp dụng cả TRƯỚC và SAU)
+                // KIỂM TRA CHIỀU NHẬN
                 let errRateNhan = Boolean(d.reg_sources_err && /Rate\s*[456]/i.test(d.reg_sources_err));
                 if (errRateNhan) {
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT TARIFF CHIỀU NHẬN!</b> Mục <b>Tariff ➔ Register Sources</b> đang cài nhầm (${d.reg_sources_err}) dẫn đến sai lệch chỉ số biểu giá Nhận. 👉 <b>Yêu cầu kiểm tra và cài đặt lại ngay!</b>`);
+                    canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}): LỖI TARIFF CHIỀU NHẬN!</b> Mục <b>Tariff ➔ Register Sources</b> cài nhầm (${d.reg_sources_err}) gây lệch chỉ số Nhận. 👉 <b>Kiểm tra cài đặt lại ngay!</b>`);
                 } else if (d.p_nhan > 0 && sumNhan3Bieu === 0) {
                     if (diffNhan <= 2) {
-                        canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan} kWh</b>, 3 biểu <b>B1, B2, B3 (Nhận) = 0</b> (Lệch <b>${diffNhan} kWh ≤ 2 kWh</b>). Hệ thống đã kiểm tra mục <b>Tariff ➔ Register Sources ĐÚNG QUY ĐỊNH</b>, độ lệch chỉ do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ / CHẤP NHẬN ĐƯỢC!</b>`);
+                        canhBao.push(`ℹ️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> P Nhận Tổng = <b>${d.p_nhan} kWh</b>, B1..B3 (Nhận) = <b>0</b> (Lệch <b>${diffNhan} kWh ≤ 2 kWh</b>). Mục <b>Tariff</b> đúng quy định, lệch do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ!</b>`);
                     } else {
-                        canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Nhận) đều bằng 0</b> (Lệch <b>${diffNhan.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                        canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> P Nhận Tổng = <b>${d.p_nhan.toLocaleString('en-US')} kWh</b> nhưng B1..B3 (Nhận) = <b>0</b> (Lệch <b>${diffNhan.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Kiểm tra lại ngay!</b>`);
                     }
                 } else if (diffNhan > 2) {
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Tổng 3 biểu chiều Nhận (<b>${sumNhan3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffNhan.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Nhận Tổng (<b>${d.p_nhan.toLocaleString('en-US')} kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                    canhBao.push(`🚨 <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Tổng 3 biểu Nhận (<b>${sumNhan3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffNhan.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Nhận Tổng (<b>${d.p_nhan.toLocaleString('en-US')} kWh</b>)! 👉 <b>Kiểm tra lại ngay!</b>`);
                 }
             }
         }
 
-        // LỖI 3D (MỚI - BẮT TẬN GỐC TRONG TARIFF A1700 NGAY CẢ KHI P NHẬN TỔNG = 0):
-        if (d.reg_sources_err && !(d.p_nhan > 0 && sumNhan3Bieu === 0)) {
-            canhBao.push(`❌ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT NGUỒN THANH GHI (REGISTER SOURCES) TRÊN A1700!</b> Phát hiện: ${d.reg_sources_err}. Chuẩn bắt buộc: <b>Rate 1..3 = Import Wh</b> và <b>Rate 4..6 = Export Wh</b>.`);
-        }
-
-        // LỖI 4: Cảnh báo công tơ Gelex MCL 305 nhưng trong PDF hiển thị tên GLXME-40mG
+        // LỖI 4: Cảnh báo công tơ Gelex đời 2019 (GLXME-40mG / MCL 305) thiếu SL LP & Ngày lập trình + Hướng dẫn bấm nút cứng X5
         let fileNameStr = String(d.file_name || "");
         let isMcl305 = /(?:^|[^0-9])305\d{8,14}/.test(fileNameStr);
         let isTen40mG = /40mG/i.test(String(d.ten_cong_to || ""));
+        let isThieuSlLpGelex = /GELEX|GLX|ME-/i.test(String(d.ten_cong_to || "")) && (d.ngay_lap_trinh === "Không có" || d.ngay_lap_trinh === "N/A");
+
         if (isMcl305 && isTen40mG) {
-            canhBao.push(`🏷️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Mã chủng loại trên tên file là <b>305 (Thực tế là công tơ GELEX ME-42 / ME-42mG / ME-42 TC103)</b> nhưng thông tin trong file PDF đang hiển thị tên là <b>${d.ten_cong_to}</b>.`);
+            canhBao.push(`🏷️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Mã trên tên file là <b>305 (Thực tế là GELEX ME-42 / ME-42mG)</b> nhưng PDF hiển thị <b>${d.ten_cong_to}</b> (đời 2019, phần mềm cũ chưa xuất mục <b>SL LP</b> & <b>Ngày lập trình cuối</b> ra PDF).<br><span style="display:inline-block; margin-top:3px; padding-left:18px; color:#92400e;">👉 <b>Cách lấy trực tiếp trên công tơ (X5):</b> Nhấn giữ nút phía trên mặt công tơ một lúc để xem <b>Số lần lập trình</b>, sau đó nhấn thả ra để xem <b>Ngày & Giờ lập trình thực tế</b>.</span>`);
+        } else if (isTen40mG || isThieuSlLpGelex) {
+            canhBao.push(`🏷️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Công tơ <b>${d.ten_cong_to}</b> (đời 2019) phần mềm đọc cũ chưa xuất mục <b>SL LP</b> & <b>Ngày lập trình cuối</b> ra PDF.<br><span style="display:inline-block; margin-top:3px; padding-left:18px; color:#92400e;">👉 <b>Cách lấy trực tiếp trên công tơ (X5):</b> Nhấn giữ nút phía trên mặt công tơ một lúc để xem <b>Số lần lập trình</b>, sau đó nhấn thả ra để xem <b>Ngày & Giờ lập trình thực tế</b>.</span>`);
         }
 
         // LỖI 5: Thông báo chi tiết các mốc giờ chia nhỏ đã cộng dồn theo từng biểu T3(TĐ), T1(BT), T2(CĐ)
@@ -1549,7 +1575,7 @@ function chayRadarQC() {
             let trangThaiGop = (d.is_tt60 || d.is_tt16)
                 ? `cộng dồn liền mạch vẫn <b>ĐẠT chuẩn ${ttLabel}</b>`
                 : `đã cộng dồn các mốc liền kề cùng biểu giá`;
-            canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Khung giờ biểu giá có các mốc chia nhỏ nhưng ${trangThaiGop}:<br><span style="display:inline-block; margin-top:3px; padding-left:18px; color:#92400e;">• ${dsGop.join("<br>• ")}</span>`);
+            canhBao.push(`ℹ️ <b>${nhanCongTo} (${tenFileGiaiDoan} - ${d.file_name}):</b> Khung giờ biểu giá có các mốc chia nhỏ nhưng ${trangThaiGop}:<br><span style="display:inline-block; margin-top:3px; padding-left:18px; color:#92400e;">• ${dsGop.join("<br>• ")}</span>`);
         }
     });
 
