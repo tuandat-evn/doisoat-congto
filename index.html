@@ -1380,16 +1380,37 @@ async function runFullProcess() {
         let badgeCls = d.is_hop_le ? "badge-green" : "badge-red";
         let stageCls = (d.giai_doan === "SAU") ? "stage-sau" : "stage-truoc";
 
-        // Kiểm tra riêng chiều Giao và chiều Nhận: nếu P Tổng > 0 mà cả 3 biểu B1, B2, B3 của chiều đó = 0 (hoặc lỗi cài Register Sources) thì tô nền cảnh báo
-        let isZeroGiao = d.is_zero_3bieu || (d.p_giao > 0 && (d.b1_giao + d.b2_giao + d.b3_giao === 0));
-        let isZeroNhan = d.is_zero_3bieu || (d.p_nhan > 0 && (d.b1_nhan + d.b2_nhan + d.b3_nhan === 0)) || Boolean(d.reg_sources_err);
+        // Tính tổng 3 biểu và độ lệch so với P Tổng (cho cả TRƯỚC và SAU)
+        let sumGiao = d.b1_giao + d.b2_giao + d.b3_giao;
+        let sumNhan = d.b1_nhan + d.b2_nhan + d.b3_nhan;
+        let diffGiao = Math.abs(d.p_giao - sumGiao);
+        let diffNhan = Math.abs(d.p_nhan - sumNhan);
 
-        let zClsGiao = isZeroGiao ? "col-so zero-tariff-cell" : "col-so";
-        let zClsNhan = isZeroNhan ? "col-nhan zero-tariff-cell" : "col-nhan";
-        let tipGiao = isZeroGiao ? "Cảnh báo: P Giao Tổng > 0 nhưng B1, B2, B3 chiều Giao đều bằng 0!" : "";
-        let tipNhan = d.reg_sources_err
-            ? `Lỗi cài đặt Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
-            : (isZeroNhan ? "Cảnh báo: P Nhận Tổng > 0 nhưng B1, B2, B3 chiều Nhận đều bằng 0!" : "");
+        // Chiều Giao: Báo lỗi tô màu nếu cài sai nguồn Rate 1..3 HOẶC lệch > 2 kWh (khi P Giao > 0 mà 3 biểu = 0 hoặc lệch lớn)
+        let hasErrRateGiao = Boolean(d.reg_sources_err && /Rate\s*[123]/i.test(d.reg_sources_err));
+        let hasErrRateNhan = Boolean(d.reg_sources_err && /Rate\s*[456]/i.test(d.reg_sources_err));
+
+        let isZeroGiaoErr = d.is_zero_3bieu || hasErrRateGiao || (d.p_giao > 0 && sumGiao === 0 && diffGiao > 2) || (diffGiao > 2);
+        let isZeroGiaoOk  = !isZeroGiaoErr && (d.p_giao > 0 && sumGiao === 0 && diffGiao <= 2);
+
+        // Chiều Nhận: Nếu Tariff đúng quy định (!hasErrRateNhan) và độ lệch <= 2 kWh thì HỢP LỆ (không tô cam báo lỗi)
+        let isZeroNhanErr = d.is_zero_3bieu || hasErrRateNhan || (d.p_nhan > 0 && sumNhan === 0 && diffNhan > 2) || (diffNhan > 2);
+        let isZeroNhanOk  = !isZeroNhanErr && (d.p_nhan > 0 && sumNhan === 0 && diffNhan <= 2);
+
+        let zClsGiao = isZeroGiaoErr ? "col-so zero-tariff-cell" : "col-so";
+        let zClsNhan = isZeroNhanErr ? "col-nhan zero-tariff-cell" : "col-nhan";
+
+        let tipGiao = hasErrRateGiao
+            ? `Lỗi cài đặt Tariff ➔ Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
+            : (isZeroGiaoErr
+                ? `Cảnh báo: P Giao Tổng (${d.p_giao}) lệch ${diffGiao} kWh (> 2 kWh) so với tổng 3 biểu Giao (${sumGiao})!`
+                : (isZeroGiaoOk ? `Hợp lệ: Lệch ${diffGiao} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi, mục Tariff đúng quy định.` : ""));
+
+        let tipNhan = hasErrRateNhan
+            ? `Lỗi cài đặt Tariff ➔ Register Sources: ${d.reg_sources_err.replace(/<[^>]*>/g, '')}`
+            : (isZeroNhanErr
+                ? `Cảnh báo: P Nhận Tổng (${d.p_nhan}) lệch ${diffNhan} kWh (> 2 kWh) so với tổng 3 biểu Nhận (${sumNhan})!`
+                : (isZeroNhanOk ? `Hợp lệ: Lệch ${diffNhan} kWh (≤ 2 kWh) do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi, mục Tariff đúng quy định.` : ""));
 
         let tr = document.createElement('tr');
         tr.className = (d.giai_doan === "SAU") ? "row-sau" : "row-truoc";
@@ -1455,34 +1476,52 @@ function chayRadarQC() {
         }
     });
 
-    // 2. Quét toàn bộ các file đã nạp
+    // 2. Quét toàn bộ các file đã nạp (Áp dụng cho cả TRƯỚC và SAU)
     banGhiHoanThien.forEach(d => {
         let nhanCongTo = (d.serial && d.serial !== "N/A") ? `Công tơ ${d.serial}` : `File chưa rõ Serial`;
         let sumGiao3Bieu = d.b1_giao + d.b2_giao + d.b3_giao;
         let sumNhan3Bieu = d.b1_nhan + d.b2_nhan + d.b3_nhan;
         let sum3Bieu = sumGiao3Bieu + sumNhan3Bieu;
         let sumAll = d.p_giao + d.p_nhan + d.q_giao + d.q_nhan + sum3Bieu;
+        let diffGiao = Math.abs(d.p_giao - sumGiao3Bieu);
+        let diffNhan = Math.abs(d.p_nhan - sumNhan3Bieu);
 
         // LỖI 1: File PDF xuất thiếu bảng thông số (chỉ in phần Tariff như duc manh.pdf)
         if (d.is_missing_tables) {
             canhBao.push(`📄 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI XUẤT FILE PDF THIẾU THÔNG SỐ!</b> File chỉ có bảng khung giờ biểu giá (Tariff), thiếu hoàn toàn bảng Chỉ số điện năng (Current Values) và Lịch sử lập trình (SL LP & Ngày lập trình). 👉 Yêu cầu xuất lại file đọc đầy đủ!`);
         } else {
-            // LỖI 2 & 3 (GIỮ NGUYÊN): Toàn bộ chỉ số = 0 HOẶC cả 6 ô B1, B2, B3 (Giao & Nhận) đều = 0
+            // LỖI 2 & 3: Toàn bộ chỉ số = 0 HOẶC cả 6 ô B1, B2, B3 (Giao & Nhận) đều = 0
             if (sumAll === 0) {
                 canhBao.push(`⚠️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Toàn bộ 10 chỉ số P, Q, B1..B3 đều đang bằng 0!`);
-            } else if (sum3Bieu === 0) {
+            } else if (sum3Bieu === 0 && (d.p_giao > 2 || d.p_nhan > 2 || Boolean(d.reg_sources_err))) {
                 canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Cả 3 biểu giá <b>B1, B2, B3 (chiều Giao & Nhận) đều bằng 0</b> (trong khi P Tổng = ${d.p_giao.toLocaleString('en-US')}). Anh em kiểm tra lại ngay!`);
             } else {
-                // LỖI 3B (MỚI): Chiều Giao có P Tổng > 0 nhưng B1, B2, B3 chiều Giao đều = 0
-                if (d.p_giao > 0 && sumGiao3Bieu === 0) {
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Giao) đều bằng 0</b>!`);
+                // KIỂM TRA CHIỀU GIAO (Áp dụng cả TRƯỚC và SAU)
+                let errRateGiao = Boolean(d.reg_sources_err && /Rate\s*[123]/i.test(d.reg_sources_err));
+                if (errRateGiao) {
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT TARIFF CHIỀU GIAO!</b> Mục <b>Tariff ➔ Register Sources</b> đang cài nhầm (${d.reg_sources_err}). 👉 <b>Yêu cầu kiểm tra và cài đặt lại ngay!</b>`);
+                } else if (d.p_giao > 0 && sumGiao3Bieu === 0) {
+                    if (diffGiao <= 2) {
+                        canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao} kWh</b>, 3 biểu <b>B1, B2, B3 = 0</b> (Lệch <b>${diffGiao} kWh ≤ 2 kWh</b>). Mục <b>Tariff</b> đã cài đúng quy định, độ lệch chỉ do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ / CHẤP NHẬN ĐƯỢC!</b>`);
+                    } else {
+                        canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Giao có <b>P Giao Tổng = ${d.p_giao.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Giao) đều bằng 0</b> (Lệch <b>${diffGiao.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                    }
+                } else if (diffGiao > 2) {
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Tổng 3 biểu chiều Giao (<b>${sumGiao3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffGiao.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Giao Tổng (<b>${d.p_giao.toLocaleString('en-US')} kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
                 }
-                // LỖI 3C (MỚI): Chiều Nhận có P Nhận Tổng > 0 nhưng B1, B2, B3 chiều Nhận đều = 0 (Như 5 file A1700 cài nhầm Rate 4..6)
-                if (d.p_nhan > 0 && sumNhan3Bieu === 0) {
-                    let goiY = d.reg_sources_err
-                        ? `Nguyên nhân: Mục <b>Tariff ➔ Register Sources</b> cài sai (${d.reg_sources_err}).`
-                        : `Kiểm tra ngay mục <b>Tariff ➔ Register Sources</b> xem Rate 4, 5, 6 có bị cài nhầm thành <b>Import Wh</b> thay vì <b>Export Wh</b> hay không!`;
-                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Nhận) đều bằng 0</b>! 👉 ${goiY}`);
+
+                // KIỂM TRA CHIỀU NHẬN (Áp dụng cả TRƯỚC và SAU)
+                let errRateNhan = Boolean(d.reg_sources_err && /Rate\s*[456]/i.test(d.reg_sources_err));
+                if (errRateNhan) {
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}): LỖI CÀI ĐẶT TARIFF CHIỀU NHẬN!</b> Mục <b>Tariff ➔ Register Sources</b> đang cài nhầm (${d.reg_sources_err}) dẫn đến sai lệch chỉ số biểu giá Nhận. 👉 <b>Yêu cầu kiểm tra và cài đặt lại ngay!</b>`);
+                } else if (d.p_nhan > 0 && sumNhan3Bieu === 0) {
+                    if (diffNhan <= 2) {
+                        canhBao.push(`ℹ️ <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan} kWh</b>, 3 biểu <b>B1, B2, B3 (Nhận) = 0</b> (Lệch <b>${diffNhan} kWh ≤ 2 kWh</b>). Hệ thống đã kiểm tra mục <b>Tariff ➔ Register Sources ĐÚNG QUY ĐỊNH</b>, độ lệch chỉ do phần lẻ thập phân (< 1 kWh) trên từng thanh ghi ➔ <b>HỢP LỆ / CHẤP NHẬN ĐƯỢC!</b>`);
+                    } else {
+                        canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Chiều Nhận có <b>P Nhận Tổng = ${d.p_nhan.toLocaleString('en-US')} kWh</b> nhưng cả 3 biểu giá <b>B1, B2, B3 (Nhận) đều bằng 0</b> (Lệch <b>${diffNhan.toLocaleString('en-US')} kWh > 2 kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
+                    }
+                } else if (diffNhan > 2) {
+                    canhBao.push(`🚨 <b>${nhanCongTo} (Giai đoạn ${d.giai_doan} - ${d.file_name}):</b> Tổng 3 biểu chiều Nhận (<b>${sumNhan3Bieu.toLocaleString('en-US')} kWh</b>) lệch <b>${diffNhan.toLocaleString('en-US')} kWh (> 2 kWh)</b> so với P Nhận Tổng (<b>${d.p_nhan.toLocaleString('en-US')} kWh</b>)! 👉 <b>Yêu cầu kiểm tra lại ngay!</b>`);
                 }
             }
         }
