@@ -605,7 +605,7 @@ function phanTichKhungGioElster(textDay) {
     return ketQua;
 }
 
-function vietHoaNgayThangElster(chuoiGoc) {
+function vietHoaNgayThangElster(chuoiGoc, fullText = "", fileName = "") {
     if (!chuoiGoc || chuoiGoc === "N/A") return "N/A";
     let s = chuoiGoc.trim().replace(/SA/gi, 'AM').replace(/CH/gi, 'PM');
     let m = s.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?:\s*(AM|PM))?/i);
@@ -614,9 +614,43 @@ function vietHoaNgayThangElster(chuoiGoc) {
     let hr = parseInt(m[4], 10), mn = m[5], ampm = m[6] ? m[6].toUpperCase() : null;
     if (ampm === 'PM' && hr < 12) hr += 12;
     if (ampm === 'AM' && hr === 12) hr = 0;
-    let day = p1 > 12 ? p1 : p2;
-    let month = p1 > 12 ? p2 : p1;
-    if (p1 <= 12 && p2 <= 12) { month = p1; day = p2; }
+
+    let day = p1, month = p2;
+    if (p1 > 12) {
+        day = p1; month = p2;
+    } else if (p2 > 12) {
+        day = p2; month = p1;
+    } else {
+        // Khi cả p1 <= 12 và p2 <= 12 (VD: 12/08/2026), tự động nhận diện chuẩn DD/MM hay MM/DD của cả file PDF
+        let isMM_DD = false;
+        let allDates = [...(fullText || "").matchAll(/\b(\d{1,2})\/(\d{1,2})\/20\d{2}\b/g)];
+        let countFirstGt12 = 0, countSecondGt12 = 0;
+        for (let dm of allDates) {
+            let d1 = parseInt(dm[1], 10), d2 = parseInt(dm[2], 10);
+            if (d1 > 12 && d2 <= 12) countFirstGt12++;
+            else if (d2 > 12 && d1 <= 12) countSecondGt12++;
+        }
+
+        if (countSecondGt12 > countFirstGt12) {
+            isMM_DD = true;
+        } else if (countFirstGt12 === 0 && countSecondGt12 === 0 && fileName) {
+            // Nếu mọi ngày trong PDF đều <= 12, đối chiếu thêm với ngày _DDMMYYYY trên tên file
+            let fnDate = fileName.match(/_(\d{2})(\d{2})(20\d{2})/);
+            if (fnDate) {
+                let fDay = parseInt(fnDate[1], 10), fMon = parseInt(fnDate[2], 10);
+                if (fDay !== fMon && allDates.length > 0) {
+                    let h1 = parseInt(allDates[0][1], 10), h2 = parseInt(allDates[0][2], 10);
+                    if (h1 === fMon && h2 === fDay) isMM_DD = true;
+                }
+            }
+        }
+
+        if (isMM_DD) {
+            month = p1; day = p2;
+        } else {
+            day = p1; month = p2; // Mặc định chuẩn Việt Nam DD/MM/YYYY
+        }
+    }
     return `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${yr} ${String(hr).padStart(2,'0')}:${mn}`;
 }
 
@@ -639,7 +673,7 @@ function xuLyFileElster(pdfObj, fileName = "") {
     let tiM = combined.match(/CT\s+[\d\.,]+\s+[\d\.,]+\s*=\s*([\d\.,]+)/i);
     let progM = combined.match(/Count\s+TimeStamp[\s\S]*?\n\s*(\d+)\s+([\d/]+\s+[\d:]+(?:\s+[a-zA-Z]+)?)/i);
     let soLan = progM ? parseInt(progM[1], 10) : 0;
-    let ngayLapTrinh = progM ? vietHoaNgayThangElster(progM[2]) : "N/A";
+    let ngayLapTrinh = progM ? vietHoaNgayThangElster(progM[2], combined, fileName) : "N/A";
 
     let idxCurStd = textStd.indexOf("Current Values");
     let idxCurCol = textCol.indexOf("Current Values");
