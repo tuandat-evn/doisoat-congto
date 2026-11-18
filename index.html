@@ -1009,9 +1009,9 @@ function xuLyFileDts27Do(text) {
 
 function xuLyFileDts27Xanh(text) {
     let clean = text.replace(/"/g, '');
-    let soM = clean.match(/Meter number:[\s\,\n]*(\d+)/i);
+    let soM = clean.match(/Meter number:[\s\,\n]*(\d+)/i) || clean.match(/0\.0\.96\.1\.1\.255[\s\,\n|]*(\d+)/i);
     // Bắt thẳng mã OBIS 0.0.96.2.0.255 và 0.0.96.2.1.255 (bất chấp chữ Changes/Time bị nhảy dòng)
-    let slM = clean.match(/0\.0\.96\.2\.0\.255(?:[\s\,\n]|Changes)*(\d+)/i);
+    let slM = clean.match(/0\.0\.96\.2\.0\.255(?:[\s\,\n|]|Changes)*(\d+)/i);
     let tgM = clean.match(/0\.0\.96\.2\.1\.255[\s\S]{0,40}?(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})/i);
     let ngayLt = "N/A";
     if (tgM) {
@@ -1020,7 +1020,7 @@ function xuLyFileDts27Xanh(text) {
         ngayLt = dm ? `${dm[3]}/${dm[2]}/${dm[1]} ${dm[4]}` : raw;
     }
     let matchesGio = [];
-    let regG = /\b([12])[\s\,\n]+([\d]{2}:[\d]{2}:[\d]{2})[\s\,\n]+([123])\b/g;
+    let regG = /\b([12])[\s\,\n|]+([\d]{2}:[\d]{2}:[\d]{2})[\s\,\n|]+([123])\b/g;
     let m;
     while ((m = regG.exec(clean)) !== null) matchesGio.push([m[1], m[2], m[3]]);
 
@@ -1028,9 +1028,17 @@ function xuLyFileDts27Xanh(text) {
     let thucTeCn = phanTichKhungGioDTS(matchesGio, '2');
 
     const getObis = (obis) => {
-        let r = new RegExp(obis.replace(/\./g, '\\.') + '[\\s\\,\\n]*([\\d\\.]+)');
-        let mt = clean.match(r);
-        return mt ? Math.trunc(parseFloat(mt[1]) / 1000.0) : 0;
+        // Quét tất cả các dòng có mã OBIS này, bỏ qua dòng cấu hình đơn vị dạng "1,Wh" hoặc "1,varh"
+        let r = new RegExp(obis.replace(/\./g, '\\.') + '[\\s\\,\\n|]*([\\d\\.]+)(?!\\s*,\\s*(?:k?Wh|k?varh)\\b)', 'gi');
+        let vals = [];
+        let mt;
+        while ((mt = r.exec(clean)) !== null) {
+            let v = parseFloat(mt[1]);
+            if (!isNaN(v)) vals.push(v);
+        }
+        if (vals.length === 0) return 0;
+        let maxVal = Math.max(...vals);
+        return Math.trunc(maxVal / 1000.0);
     };
 
     return {
