@@ -1871,6 +1871,24 @@ async function goiApiBanQuyen(payload) {
     return await res.json();
 }
 
+function layMaMayTinh() {
+    try {
+        let id = localStorage.getItem("evn_doisoat_device_id");
+        if (!id) {
+            const ua = navigator.userAgent || "";
+            const os = /Android|iPhone|iPad/i.test(ua) ? "MOB" : (/Mac/i.test(ua) ? "MAC" : "WIN");
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            let rand = "";
+            for (let i = 0; i < 6; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));
+            id = `${os}-${rand}`;
+            localStorage.setItem("evn_doisoat_device_id", id);
+        }
+        return id;
+    } catch (e) {
+        return "UNKNOWN";
+    }
+}
+
 function ghiNhatKySuDung(hanhDong, soFile, ghiChu = "") {
     const maDv = (document.getElementById('maDonViSelect') || {}).value || licenseState.ma_dv || "";
     if (!maDv || !GAS_LICENSE_URL || GAS_LICENSE_URL.includes("DAN_LINK_WEB_APP")) return;
@@ -1883,7 +1901,8 @@ function ghiNhatKySuDung(hanhDong, soFile, ghiChu = "") {
             che_do: laQuyenPro() ? licenseState.mode : "FREE",
             hanh_dong: hanhDong,
             so_file: soFile || 0,
-            ghi_chu: ghiChu
+            ghi_chu: ghiChu,
+            ma_may: layMaMayTinh()
         }),
         redirect: "follow"
     }).catch(() => {});
@@ -1895,7 +1914,7 @@ async function xacThucKey(maDv, key, imLang = false) {
         return false;
     }
     try {
-        const res = await goiApiBanQuyen({ action: "verify", ma_dv: maDv, key: key || "" });
+        const res = await goiApiBanQuyen({ action: "verify", ma_dv: maDv, key: key || "", ma_may: layMaMayTinh() });
         if (res && res.ok && res.pro_code) {
             new Function(res.pro_code)();
             licenseState = {
