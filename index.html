@@ -327,7 +327,58 @@
     <!-- TAB 1: HỆ THỐNG ĐỐI SOÁT & XUẤT BIÊN BẢN (MẶC ĐỊNH MỞ LÀM MÀN HÌNH CHÍNH) -->
     <!-- ========================================================================= -->
     <div id="tabDoiSoatSection" class="container-full">
-        <div class="card">
+        <div class="card"><!-- THANH ĐỊNH DANH ĐƠN VỊ (HN01-HN12) & KÍCH HOẠT BẢN QUYỀN -->
+            <div id="licenseBar" style="background:linear-gradient(90deg,#eff6ff,#fff7ed); border:1px solid #bfdbfe; border-left:4px solid #00338d; border-radius:10px; padding:10px 14px; margin-bottom:14px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; font-size:13px;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:8px;">
+                    <span style="font-weight:700; color:#00338d;">🏢 Đơn vị (Bắt buộc):</span>
+                    <select id="maDonViSelect" onchange="onChangeMaDonVi()" style="padding:6px 10px; border:1px solid #93c5fd; border-radius:6px; font-weight:700; color:#0f172a; background:#fff; cursor:pointer;">
+                        <option value="">-- Chọn Mã ĐV (HN01 - HN12) --</option>
+                        <option value="HN01">HN01 - Công ty Điện lực HN01</option>
+                        <option value="HN02">HN02 - Công ty Điện lực HN02</option>
+                        <option value="HN03">HN03 - Công ty Điện lực HN03</option>
+                        <option value="HN04">HN04 - Công ty Điện lực HN04</option>
+                        <option value="HN05">HN05 - Công ty Điện lực HN05</option>
+                        <option value="HN06">HN06 - Công ty Điện lực HN06</option>
+                        <option value="HN07">HN07 - Công ty Điện lực HN07</option>
+                        <option value="HN08">HN08 - Công ty Điện lực HN08</option>
+                        <option value="HN09">HN09 - Công ty Điện lực HN09</option>
+                        <option value="HN10">HN10 - Công ty Điện lực HN10</option>
+                        <option value="HN11">HN11 - Công ty Điện lực HN11</option>
+                        <option value="HN12">HN12 - Công ty Điện lực HN12</option>
+                    </select>
+                    <input id="licenseKeyInput" type="password" placeholder="Nhập Mã kích hoạt (Key)..." onkeydown="if(event.key==='Enter') kichHoatBanQuyen()" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; width:195px; font-size:13px;">
+                    <button type="button" id="btnKichHoat" onclick="kichHoatBanQuyen()" style="background:#00338d; color:#fff; border:none; border-radius:6px; padding:6px 12px; font-weight:700; cursor:pointer;">🔑 Kích hoạt</button>
+                    <button type="button" id="btnDangXuatKey" onclick="dangXuatBanQuyen()" style="display:none; background:#fff; color:#dc2626; border:1px solid #fca5a5; border-radius:6px; padding:5px 10px; font-size:12px; font-weight:600; cursor:pointer;">Đổi Key</button>
+                </div>
+                <div id="licenseStatusBadge" style="font-size:12px; font-weight:700; color:#b45309; background:#fef3c7; border:1px solid #fcd34d; padding:5px 10px; border-radius:20px;">
+                    🔓 Chế độ Dùng thử (Tối đa 2 file | Khóa xuất Word/Excel)
+                </div>
+            </div>
+
+            <!-- HỘP THOẠI THÔNG BÁO CẤP PHÉP LỊCH SỰ -->
+            <div id="licenseModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.62); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+                <div style="background:#fff; max-width:500px; width:100%; border-radius:14px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,0.28); font-size:14px;">
+                    <div style="background:linear-gradient(135deg,#00338d,#1d4ed8); color:#fff; padding:14px 18px; display:flex; justify-content:space-between; align-items:center;">
+                        <b style="font-size:15px;">🔐 KÍCH HOẠT BẢN QUYỀN ĐƠN VỊ (EVNHANOI)</b>
+                        <button type="button" onclick="dongModalBanQuyen()" style="background:none; border:none; color:#fff; font-size:20px; cursor:pointer; line-height:1;">&times;</button>
+                    </div>
+                    <div style="padding:18px; line-height:1.6; color:#334155;">
+                        <p id="licenseModalReason" style="margin:0 0 10px; font-weight:700; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; padding:8px 12px; border-radius:8px;"></p>
+                        <p style="margin:0 0 10px;">
+                            Giai đoạn thử nghiệm mở đã hoàn tất. Nhằm duy trì cập nhật mẫu công tơ mới, biểu mẫu QĐ 963 và hỗ trợ kỹ thuật trực tiếp theo từng đơn vị, hệ thống áp dụng cơ chế kích hoạt theo <b>Mã Công ty Điện lực (HN01 – HN12)</b>.
+                        </p>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:14px;">
+                            <div>👤 <b>Đầu mối cấp Mã kích hoạt:</b> <span style="color:#00338d; font-weight:700;">Trung Kiên HN11</span></div>
+                            <div style="margin-top:4px;">📞 <b>SĐT / Zalo:</b> <a href="tel:0966248666" style="color:#16a34a; font-weight:700; text-decoration:none;">0966.248.666</a> &nbsp;|&nbsp; <a href="https://zalo.me/0966248666" target="_blank" style="color:#2563eb; font-weight:700; text-decoration:none;">💬 Nhắn Zalo ngay</a></div>
+                        </div>
+                        <div style="display:flex; gap:8px; margin-bottom:10px;">
+                            <input id="modalKeyInput" type="text" placeholder="Nhập Mã kích hoạt tại đây..." onkeydown="if(event.key==='Enter') kichHoatTuModal()" style="flex:1; padding:8px 10px; border:1px solid #94a3b8; border-radius:8px; font-size:14px;">
+                            <button type="button" onclick="kichHoatTuModal()" style="background:#00338d; color:#fff; border:none; border-radius:8px; padding:8px 16px; font-weight:700; cursor:pointer;">Kích hoạt</button>
+                        </div>
+                        <div id="modalKeyMsg" style="font-size:12px; color:#dc2626; min-height:18px;"></div>
+                    </div>
+                </div>
+            </div>
             <div class="control-grid">
                 <div>
                     <label class="field-label">📍 Chọn chủng loại công tơ (Hoặc để Tự động nhận diện thông minh):</label>
@@ -1405,6 +1456,28 @@ async function runFullProcess() {
 
     if (activeList.length === 0) return;
 
+    // 1. Bắt buộc chọn Mã đơn vị (HN01 - HN12)
+    const maDv = (document.getElementById('maDonViSelect') || {}).value || "";
+    if (!maDv) {
+        const sel = document.getElementById('maDonViSelect');
+        if (sel) { sel.style.border = "2px solid #dc2626"; sel.focus(); }
+        alert("⚠️ Vui lòng chọn Mã Công ty Điện lực (HN01 – HN12) ở thanh phía trên trước khi đối soát!");
+        return;
+    }
+
+    // 2. Giới hạn bản Dùng thử tối đa 2 file PDF
+    if (!laQuyenPro() && activeList.length > 2) {
+        moModalBanQuyen(`Bạn vừa nạp ${activeList.length} file PDF. Chế độ Dùng thử chỉ hỗ trợ tối đa 2 file/lượt!`);
+        return;
+    }
+
+    // 3. Ghi nhận lượt đối soát về Google Sheet theo đúng Mã đơn vị
+    const sigCheck = maDv + "|" + activeList.map(x => x.file.name + "_" + x.file.size).join(",");
+    if (sigCheck !== window.__LAST_LOG_SIG__) {
+        window.__LAST_LOG_SIG__ = sigCheck;
+        ghiNhatKySuDung("CHECK", activeList.length, activeList.map(x => x.file.name).slice(0, 3).join(", "));
+    }
+
     const resultSec = document.getElementById('resultSection');
     const banner = document.getElementById('statusBanner');
     resultSec.style.display = 'block';
@@ -1594,15 +1667,20 @@ async function runFullProcess() {
 function chayRadarQC() {
     let canhBao = [];
 
-    // 1. Cảnh báo số lần lập trình nhảy vọt > +1 (quét theo cặp Serial)
+    // 1. Cảnh báo số lần lập trình nhảy vọt (GELEX tăng 1..10 là bình thường; dòng khác > +1 mới báo)
     let serials = [...new Set(banGhiHoanThien.map(x => x.serial).filter(s => s && s !== "N/A"))];
     serials.forEach(s => {
         let files = banGhiHoanThien.filter(x => x.serial === s);
         let dTr = files.find(x => x.giai_doan === "TRƯỚC");
         let dSa = files.find(x => x.giai_doan === "SAU");
 
-        if (dTr && dSa && (dSa.lan_cai_dat > dTr.lan_cai_dat + 1)) {
-            canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (File trước cài: ${dTr.lan_cai_dat} ➡️ File sau cài: ${dSa.lan_cai_dat}).`);
+        if (dTr && dSa) {
+            let tenLoai = String(dSa.ten_cong_to || dTr.ten_cong_to || "").toUpperCase();
+            let isGelex = tenLoai.includes("GELEX") || tenLoai.includes("GLX");
+            let nguongToiDa = isGelex ? 10 : 1;
+            if (dSa.lan_cai_dat > dTr.lan_cai_dat + nguongToiDa) {
+                canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (File trước cài: ${dTr.lan_cai_dat} ➡️ File sau cài: ${dSa.lan_cai_dat}).`);
+            }
         }
     });
 
@@ -1716,37 +1794,15 @@ function resetAll() {
 // =========================================================================
 // XUẤT BÁO CÁO EXCEL & XUẤT BIÊN BẢN WORD / ZIP (QĐ 963)
 // =========================================================================
-function xuatExcelTongHop() {
-    if (!banGhiHoanThien.length) return;
-    const rows = banGhiHoanThien.map((d, idx) => ({
-        "STT": idx + 1,
-        "Giai đoạn": d.giai_doan,
-        "Tên file PDF": d.file_name,
-        "Số Serial": d.serial,
-        "Loại công tơ": d.ten_cong_to,
-        "Số lần cài đặt": d.lan_cai_dat,
-        "Ngày lập trình": d.ngay_lap_trinh,
-        "Hệ số TU/TI": `${d.tu}/${d.ti}`,
-        "Tổng P Giao (kWh)": d.p_giao,
-        "B1 Giao (kWh)": d.b1_giao,
-        "B2 Giao (kWh)": d.b2_giao,
-        "B3 Giao (kWh)": d.b3_giao,
-        "Tổng P Nhận (kWh)": d.p_nhan,
-        "B1 Nhận (kWh)": d.b1_nhan,
-        "B2 Nhận (kWh)": d.b2_nhan,
-        "B3 Nhận (kWh)": d.b3_nhan,
-        "Q Giao (kVArh)": d.q_giao,
-        "Q Nhận (kVArh)": d.q_nhan,
-        "Cảnh báo B1=B2=B3=0": d.is_zero_3bieu ? "CẢ 3 BIỂU BẰNG 0" : "Bình thường",
-        "Kết quả đối soát": d.text_ket_qua.replace("● ", "")
-    }));
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Báo cáo tổng hợp");
-    XLSX.writeFile(wb, "Bao_Cao_Tong_Hop_Doi_Soat.xlsx");
-}
+
+// =========================================================================
+// HỆ THỐNG BẢN QUYỀN & KẾT NỐI KÉT SẮT GOOGLE APPS SCRIPT
+// =========================================================================
+const GAS_LICENSE_URL = "https://script.google.com/macros/s/AKfycbxWEKbgOScmVlwEcdLI1WiqH7x0zxFBu_dXR1P6Lbj2oG0NsG6E19hNLbsN0qgkBhXQ/exec";
 
 let customWordTemplateBuffer = null;
+let licenseState = { unlocked: false, ma_dv: "", ten_dv: "", mode: "FREE", han_dung: "" };
+window.__LAST_LOG_SIG__ = "";
 
 async function handleWordTemplateUpload(e) {
     const file = e.target.files[0];
@@ -1756,227 +1812,213 @@ async function handleWordTemplateUpload(e) {
     if (st) st.innerHTML = `📄 Mẫu riêng: <b style="color:#15803d;">${file.name}</b>`;
 }
 
-function escapeXmlWord(str) {
-    return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+function laQuyenPro() {
+    const selMa = (document.getElementById('maDonViSelect') || {}).value || "";
+    return Boolean(licenseState.unlocked && licenseState.ma_dv === selMa && typeof window.__PRO_XUAT_WORD__ === "function");
 }
 
-function taiFileAnToan(blob, fileName) {
-    if (typeof saveAs === 'function') {
-        saveAs(blob, fileName);
+function capNhatGiaoDienBanQuyen() {
+    const badge = document.getElementById('licenseStatusBadge');
+    const keyInput = document.getElementById('licenseKeyInput');
+    const btnKichHoat = document.getElementById('btnKichHoat');
+    const btnDangXuat = document.getElementById('btnDangXuatKey');
+    if (!badge) return;
+
+    if (laQuyenPro()) {
+        const nhanCheDo = (licenseState.mode === "FREE_FULL") ? "Ưu tiên Full" : `Hạn: ${licenseState.han_dung}`;
+        badge.style.background = "#dcfce7";
+        badge.style.borderColor = "#86efac";
+        badge.style.color = "#166534";
+        badge.innerHTML = `✅ Bản quyền: <b>${licenseState.ma_dv}</b> (${nhanCheDo})`;
+        if (keyInput) keyInput.style.display = "none";
+        if (btnKichHoat) btnKichHoat.style.display = "none";
+        if (btnDangXuat) btnDangXuat.style.display = "inline-block";
     } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+        badge.style.background = "#fef3c7";
+        badge.style.borderColor = "#fcd34d";
+        badge.style.color = "#b45309";
+        badge.innerHTML = `🔓 Chế độ Dùng thử (Tối đa 2 file | Khóa xuất Word/Excel)`;
+        if (keyInput) keyInput.style.display = "inline-block";
+        if (btnKichHoat) btnKichHoat.style.display = "inline-block";
+        if (btnDangXuat) btnDangXuat.style.display = "none";
     }
 }
 
-function timKhachHangCMIS(serial) {
-    if (typeof dictExcelCMIS !== 'object' || !dictExcelCMIS || !serial) return {};
-    let sRaw = String(serial).trim();
-    let sPad = sRaw.padStart(12, '0');
-    let sNoZero = sRaw.replace(/^0+/, '') || '0';
-    return dictExcelCMIS[sPad] || dictExcelCMIS[sRaw] || dictExcelCMIS[sNoZero] || {};
+function moModalBanQuyen(lyDo) {
+    const modal = document.getElementById('licenseModal');
+    const reasonEl = document.getElementById('licenseModalReason');
+    const msgEl = document.getElementById('modalKeyMsg');
+    if (reasonEl) reasonEl.innerText = lyDo || "Tính năng này chỉ dành cho các đơn vị đã kích hoạt bản quyền.";
+    if (msgEl) msgEl.innerText = "";
+    if (modal) modal.style.display = "flex";
 }
 
-async function xuatWordHangLoat() {
-    const btnWord = document.getElementById('btnWord');
-    const oldBtnText = btnWord ? btnWord.innerHTML : '';
+function dongModalBanQuyen() {
+    const modal = document.getElementById('licenseModal');
+    if (modal) modal.style.display = "none";
+}
+
+async function goiApiBanQuyen(payload) {
+    if (!GAS_LICENSE_URL || GAS_LICENSE_URL.includes("DAN_LINK_WEB_APP")) {
+        return { ok: false, message: "Chưa gắn đường link Google Apps Script vào GAS_LICENSE_URL." };
+    }
+    const res = await fetch(GAS_LICENSE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload),
+        redirect: "follow"
+    });
+    return await res.json();
+}
+
+function ghiNhatKySuDung(hanhDong, soFile, ghiChu = "") {
+    const maDv = (document.getElementById('maDonViSelect') || {}).value || licenseState.ma_dv || "";
+    if (!maDv || !GAS_LICENSE_URL || GAS_LICENSE_URL.includes("DAN_LINK_WEB_APP")) return;
+    fetch(GAS_LICENSE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+            action: "log",
+            ma_dv: maDv,
+            che_do: laQuyenPro() ? licenseState.mode : "FREE",
+            hanh_dong: hanhDong,
+            so_file: soFile || 0,
+            ghi_chu: ghiChu
+        }),
+        redirect: "follow"
+    }).catch(() => {});
+}
+
+async function xacThucKey(maDv, key, imLang = false) {
+    if (!maDv) {
+        if (!imLang) alert("Vui lòng chọn Mã Đơn vị (HN01 – HN12) trước!");
+        return false;
+    }
     try {
-        if (!Array.isArray(banGhiHoanThien) || banGhiHoanThien.length === 0) {
-            alert("Anh chưa nạp file PDF công tơ nào để xuất Biên bản!");
-            return;
-        }
-        if (typeof PizZip === 'undefined') {
-            alert("Thiếu thư viện PizZip (kiểm tra kết nối mạng rồi bấm Ctrl + F5 tải lại trang)!");
-            return;
-        }
-
-        if (btnWord) { btnWord.disabled = true; btnWord.innerHTML = "⏳ Đang tạo Biên bản Word..."; }
-
-        // 1. Nạp mẫu Word (Ưu tiên mẫu riêng từ máy nếu anh đã chọn, mặc định tải từ GitHub có chống cache)
-        let templateBuffer = customWordTemplateBuffer;
-        if (!templateBuffer) {
-            try {
-                const res = await fetch(`./Mau_Bien_Ban.docx?t=${Date.now()}`, { cache: "no-store" });
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                templateBuffer = await res.arrayBuffer();
-            } catch (fetchErr) {
-                alert(
-                    "Không tự tải được file Mau_Bien_Ban.docx (lỗi: " + fetchErr.message + ").\n\n" +
-                    "👉 Nếu anh đang mở web trên GitHub Pages: Kiểm tra xem đã tải file Mau_Bien_Ban.docx đúng tên lên cùng thư mục với index.html chưa.\n" +
-                    "👉 Nếu anh đang mở thử file trực tiếp từ máy tính (offline): Hãy bấm nút '📂 Đổi mẫu (.docx)' ngay phía trên để chọn file Mau_Bien_Ban.docx từ máy nhé!"
-                );
-                return;
-            }
-        }
-
-        // 2. Lấy chế độ bơm Chỉ số & VT/CT đang được chọn
-        const radioChecked = document.querySelector('input[name="cheDoBomBB"]:checked');
-        const cheDo = radioChecked ? radioChecked.value : "thuc_te";
-
-        // 3. Gom nhóm cặp TRƯỚC / SAU theo số Serial (khớp thông minh kể cả lệch số 0 đầu)
-        const groupMap = new Map();
-        for (let rec of banGhiHoanThien) {
-            if (!rec.serial || rec.serial === "N/A") continue;
-            let normKey = String(rec.serial).trim().replace(/^0+/, '') || '0';
-            if (!groupMap.has(normKey)) groupMap.set(normKey, []);
-            groupMap.get(normKey).push(rec);
-        }
-
-        const fmtNum = (n) => (typeof n === 'number' && !isNaN(n)) ? n.toLocaleString('en-US') : '0';
-        let wordFiles = [];
-        let dsThieuCap = [];
-        let dsThieuExcel = [];
-        const daNapExcel = (typeof dictExcelCMIS === 'object' && dictExcelCMIS && Object.keys(dictExcelCMIS).length > 0);
-
-        for (let [normKey, group] of groupMap.entries()) {
-            let dTr = group.find(x => x.giai_doan === "TRƯỚC");
-            let dSa = group.find(x => x.giai_doan === "SAU");
-            if (!dTr || !dSa) {
-                dsThieuCap.push(group[0].serial);
-                continue;
-            }
-
-            // Chọn nguồn chỉ số & VT/CT cho Mục I (srcTr) và Mục II (srcSa) theo 3 chế độ
-            let srcTr = (cheDo === "theo_sau") ? dSa : dTr;
-            let srcSa = (cheDo === "theo_truoc") ? dTr : dSa;
-
-            // Tra cứu đủ 12 cột thông tin từ Excel CMIS (bảo toàn số 0 đầu)
-            let serialHienThi = String(dSa.serial || dTr.serial).trim();
-            let kh = timKhachHangCMIS(serialHienThi);
-            if (daNapExcel && !kh.SERIAL && !kh.TEN_KH) {
-                dsThieuExcel.push(serialHienThi);
-            }
-            const getKH = (field, fallback) => {
-                let val = kh[field] || dTr[field] || dSa[field] || '';
-                return String(val).trim() || fallback;
+        const res = await goiApiBanQuyen({ action: "verify", ma_dv: maDv, key: key || "" });
+        if (res && res.ok && res.pro_code) {
+            new Function(res.pro_code)();
+            licenseState = {
+                unlocked: true,
+                ma_dv: res.ma_dv,
+                ten_dv: res.ten_dv || res.ma_dv,
+                mode: res.mode || "PRO",
+                han_dung: res.han_dung || ""
             };
-
-            const zip = new PizZip(templateBuffer);
-            let xml = zip.file("word/document.xml").asText();
-
-            // Tự động hàn gắn lại các thẻ {{...}} nếu lỡ bị Word chẻ đôi XML khi chỉnh sửa sau này
-            xml = xml.replace(/\{(?:<[^>]+>)*\{(?:<[^>]+>|[^{}])*?\}(?:<[^>]+>)*\}/g, (match) => {
-                if (match.includes('</w:p>')) return match;
-                const plain = match.replace(/<[^>]+>/g, '');
-                return /^\{\{[A-Za-z0-9_]+\}\}$/.test(plain) ? plain : match;
-            });
-
-            const rep = {
-                // Thông tin khách hàng & công tơ (đủ 12 cột Excel CMIS)
-                "{{MA_KH}}": getKH('MA_KH', '........................'),
-                "{{TEN_KH}}": getKH('TEN_KH', '..................................................'),
-                "{{DIA_CHI}}": getKH('DIA_CHI', '..................................................'),
-                "{{serial}}": serialHienThi,
-                "{{NUOC_SX}}": getKH('NUOC_SX', '..........'),
-                "{{K}}": getKH('K', '.......'),
-                "{{LOAI_CT}}": getKH('LOAI_CT', dTr.ten_cong_to || '..........'),
-                "{{CAP_CX}}": getKH('CAP_CX', '.....'),
-                "{{HE_SO}}": getKH('HE_SO', '.....'),
-                "{{TEM_TRUOC}}": getKH('TEM_TRUOC', '........................'),
-                "{{TEM_SAU}}": getKH('TEM_SAU', '........................'),
-                "{{TEN_CNQL}}": getKH('TEN_CNQL', ''),
-
-                // Mục I: Thông số công tơ TRƯỚC khi cài đặt (chỉ số & VT/CT lấy theo srcTr; SL/Ngày luôn giữ của dTr)
-                "{{p_giao_tr}}": fmtNum(srcTr.p_giao),
-                "{{b1_giao_tr}}": fmtNum(srcTr.b1_giao),
-                "{{b2_giao_tr}}": fmtNum(srcTr.b2_giao),
-                "{{b3_giao_tr}}": fmtNum(srcTr.b3_giao),
-                "{{p_nhan_tr}}": fmtNum(srcTr.p_nhan),
-                "{{b1_nhan_tr}}": fmtNum(srcTr.b1_nhan),
-                "{{b2_nhan_tr}}": fmtNum(srcTr.b2_nhan),
-                "{{b3_nhan_tr}}": fmtNum(srcTr.b3_nhan),
-                "{{q_giao_tr}}": fmtNum(srcTr.q_giao),
-                "{{q_nhan_tr}}": fmtNum(srcTr.q_nhan),
-                "{{tu_tr}}": String(srcTr.tu ?? '1.0'),
-                "{{ti_tr}}": String(srcTr.ti ?? '1.0'),
-                "{{sl_tr}}": String(dTr.lan_cai_dat ?? ''),
-                "{{ngay_tr}}": String(dTr.ngay_lap_trinh ?? ''),
-
-                // Mục II: Thông số công tơ SAU khi cài đặt (chỉ số & VT/CT lấy theo srcSa; SL/Ngày luôn giữ của dSa)
-                "{{p_giao_sa}}": fmtNum(srcSa.p_giao),
-                "{{b1_giao_sa}}": fmtNum(srcSa.b1_giao),
-                "{{b2_giao_sa}}": fmtNum(srcSa.b2_giao),
-                "{{b3_giao_sa}}": fmtNum(srcSa.b3_giao),
-                "{{p_nhan_sa}}": fmtNum(srcSa.p_nhan),
-                "{{b1_nhan_sa}}": fmtNum(srcSa.b1_nhan),
-                "{{b2_nhan_sa}}": fmtNum(srcSa.b2_nhan),
-                "{{b3_nhan_sa}}": fmtNum(srcSa.b3_nhan),
-                "{{q_giao_sa}}": fmtNum(srcSa.q_giao),
-                "{{q_nhan_sa}}": fmtNum(srcSa.q_nhan),
-                "{{tu_sa}}": String(srcSa.tu ?? '1.0'),
-                "{{ti_sa}}": String(srcSa.ti ?? '1.0'),
-                "{{sl_sa}}": String(dSa.lan_cai_dat ?? ''),
-                "{{ngay_sa}}": String(dSa.ngay_lap_trinh ?? ''),
-
-                // Dự phòng tương thích nếu mở mẫu Word cũ còn thẻ {{tu_ti}}
-                "{{tu_ti}}": `${srcTr.tu ?? '1.0'}/${srcTr.ti ?? '1.0'}`
-            };
-
-            for (let [k, v] of Object.entries(rep)) {
-                xml = xml.split(k).join(escapeXmlWord(v));
-            }
-            zip.file("word/document.xml", xml);
-
-            // Tạo dữ liệu Uint8Array chuẩn cho cả tải lẻ và nén ZIP
-            const u8 = zip.generate({ type: "uint8array", compression: "DEFLATE" });
-            let maKhSafe = String(kh.MA_KH || '').replace(/[\\/:*?"<>|]/g, '').trim();
-            let serSafe = serialHienThi.replace(/[\\/:*?"<>|]/g, '').trim();
-            let tenFileWord = maKhSafe ? `BB_${maKhSafe}_${serSafe}.docx` : `Bien_Ban_Cong_To_${serSafe}.docx`;
-
-            wordFiles.push({ fileName: tenFileWord, data: u8 });
-        }
-
-        if (wordFiles.length === 0) {
-            alert("Chưa có cặp công tơ nào đủ cả file TRƯỚC và file SAU cùng Serial để xuất Biên bản Word!");
-            return;
-        }
-
-        // 4. Xuất 1 file .docx lẻ hoặc đóng gói .zip tách riêng từng file .docx
-        if (wordFiles.length === 1) {
-            const singleBlob = new Blob([wordFiles[0].data], {
-                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            });
-            taiFileAnToan(singleBlob, wordFiles[0].fileName);
+            localStorage.setItem("evn_doisoat_lic", JSON.stringify({ ma_dv: maDv, key: key || "" }));
+            capNhatGiaoDienBanQuyen();
+            dongModalBanQuyen();
+            if (!imLang) alert(`✅ Kích hoạt thành công bản quyền cho ${licenseState.ten_dv}!`);
+            return true;
         } else {
-            const masterZip = new PizZip();
-            for (let wf of wordFiles) {
-                masterZip.file(wf.fileName, wf.data);
+            licenseState = { unlocked: false, ma_dv: "", ten_dv: "", mode: "FREE", han_dung: "" };
+            window.__PRO_XUAT_WORD__ = null;
+            window.__PRO_XUAT_EXCEL__ = null;
+            capNhatGiaoDienBanQuyen();
+            if (!imLang) {
+                const msg = (res && res.message) ? res.message : "Không thể xác thực Mã kích hoạt.";
+                const modalMsg = document.getElementById('modalKeyMsg');
+                if (document.getElementById('licenseModal').style.display === "flex" && modalMsg) {
+                    modalMsg.innerText = "❌ " + msg;
+                } else {
+                    alert("❌ " + msg);
+                }
             }
-            const zipBlob = masterZip.generate({
-                type: "blob",
-                mimeType: "application/zip",
-                compression: "DEFLATE"
-            });
-            taiFileAnToan(zipBlob, `Tron_Bo_Bien_Ban_TT60_${wordFiles.length}_CongTo.zip`);
+            return false;
         }
-
-        // 5. Nhắc nhẹ nếu có công tơ thiếu cặp hoặc chưa có trong Excel CMIS
-        let ghiChu = [];
-        if (dsThieuCap.length > 0) {
-            ghiChu.push(`- Bỏ qua ${dsThieuCap.length} công tơ do thiếu 1 trong 2 file TRƯỚC/SAU: ${dsThieuCap.join(', ')}`);
-        }
-        if (dsThieuExcel.length > 0) {
-            ghiChu.push(`- Có ${dsThieuExcel.length} công tơ chưa tìm thấy trong file Excel CMIS: ${dsThieuExcel.join(', ')}`);
-        }
-        if (ghiChu.length > 0) {
-            alert(`✅ Đã xuất thành công ${wordFiles.length} biên bản!\n\n⚠️ Lưu ý rà soát:\n${ghiChu.join('\n')}`);
-        }
-    } catch (e) {
-        alert("Lỗi khi tạo Biên bản Word: " + (e && e.message ? e.message : e));
-        console.error(e);
-    } finally {
-        if (btnWord) { btnWord.disabled = false; btnWord.innerHTML = oldBtnText; }
+    } catch (err) {
+        if (!imLang) alert("Lỗi kết nối máy chủ bản quyền: " + err.message);
+        return false;
     }
+}
+
+async function kichHoatBanQuyen() {
+    const maDv = (document.getElementById('maDonViSelect') || {}).value || "";
+    const key = ((document.getElementById('licenseKeyInput') || {}).value || "").trim();
+    const btn = document.getElementById('btnKichHoat');
+    if (btn) { btn.disabled = true; btn.innerText = "⏳ Đang kiểm tra..."; }
+    await xacThucKey(maDv, key, false);
+    if (btn) { btn.disabled = false; btn.innerText = "🔑 Kích hoạt"; }
+}
+
+async function kichHoatTuModal() {
+    const maDv = (document.getElementById('maDonViSelect') || {}).value || "";
+    const key = ((document.getElementById('modalKeyInput') || {}).value || "").trim();
+    if (!maDv) {
+        document.getElementById('modalKeyMsg').innerText = "⚠️ Vui lòng đóng khung và chọn Mã Đơn vị (HN01–HN12) ở thanh trên trước!";
+        return;
+    }
+    const ok = await xacThucKey(maDv, key, false);
+    if (ok && (cachedAllFiles.length > 0 || cachedTruocFiles.length > 0 || cachedSauFiles.length > 0)) {
+        await runFullProcess();
+    }
+}
+
+async function onChangeMaDonVi() {
+    const sel = document.getElementById('maDonViSelect');
+    if (sel) sel.style.border = "1px solid #93c5fd";
+    const maDv = sel ? sel.value : "";
+    // Kiểm tra im lặng xem đơn vị vừa chọn có thuộc diện FREE_FULL hoặc trùng Key đã lưu không
+    let savedKey = "";
+    try {
+        const saved = JSON.parse(localStorage.getItem("evn_doisoat_lic") || "{}");
+        if (saved.ma_dv === maDv) savedKey = saved.key || "";
+    } catch (e) {}
+    if (maDv) {
+        await xacThucKey(maDv, savedKey, true);
+    } else {
+        licenseState.unlocked = false;
+        capNhatGiaoDienBanQuyen();
+    }
+}
+
+function dangXuatBanQuyen() {
+    localStorage.removeItem("evn_doisoat_lic");
+    licenseState = { unlocked: false, ma_dv: "", ten_dv: "", mode: "FREE", han_dung: "" };
+    window.__PRO_XUAT_WORD__ = null;
+    window.__PRO_XUAT_EXCEL__ = null;
+    const inp = document.getElementById('licenseKeyInput');
+    if (inp) inp.value = "";
+    capNhatGiaoDienBanQuyen();
+}
+
+// Tự động khôi phục & kiểm tra lại Key đã lưu khi mở web
+window.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const saved = JSON.parse(localStorage.getItem("evn_doisoat_lic") || "{}");
+        if (saved.ma_dv) {
+            const sel = document.getElementById('maDonViSelect');
+            if (sel) sel.value = saved.ma_dv;
+            await xacThucKey(saved.ma_dv, saved.key || "", true);
+        }
+    } catch (e) {}
+});
+
+// CỔNG GỌI XUẤT BIÊN BẢN WORD (CHỈ CHẠY KHI ĐÃ MỞ KHÓA PRO)
+async function xuatWordHangLoat() {
+    if (!laQuyenPro()) {
+        moModalBanQuyen("Chức năng Xuất Biên Bản Word / ZIP (Mẫu QĐ 963) chỉ mở cho các đơn vị đã kích hoạt bản quyền.");
+        return;
+    }
+    const soBB = await window.__PRO_XUAT_WORD__({
+        banGhiHoanThien: banGhiHoanThien,
+        dictExcelCMIS: dictExcelCMIS,
+        customWordTemplateBuffer: customWordTemplateBuffer
+    });
+    if (soBB > 0) ghiNhatKySuDung("XUAT_WORD", soBB, "Xuất Biên bản Word/ZIP");
+}
+
+// CỔNG GỌI XUẤT BÁO CÁO EXCEL TỔNG HỢP (CHỈ CHẠY KHI ĐÃ MỞ KHÓA PRO)
+function xuatExcelTongHop() {
+    if (!laQuyenPro()) {
+        moModalBanQuyen("Chức năng Xuất Báo Cáo Excel Tổng Hợp chỉ mở cho các đơn vị đã kích hoạt bản quyền.");
+        return;
+    }
+    const soDong = window.__PRO_XUAT_EXCEL__({
+        banGhiHoanThien: banGhiHoanThien,
+        dictExcelCMIS: dictExcelCMIS
+    });
+    if (soDong > 0) ghiNhatKySuDung("XUAT_EXCEL", soDong, "Xuất Excel Tổng hợp");
 }
 </script>
 </body>
