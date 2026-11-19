@@ -410,6 +410,32 @@
                 <ul id="qcList" class="qc-list"></ul>
             </div>
 
+            <!-- THANH TÙY CHỌN CHẾ ĐỘ XUẤT BIÊN BẢN (3 CHẾ ĐỘ BƠM CHỈ SỐ & VT/CT) -->
+            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:10px 14px; margin-bottom:10px; display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; font-size:13px;">
+                <div style="display:flex; flex-wrap:wrap; align-items:center; gap:12px;">
+                    <span style="font-weight:700; color:#00338d;">⚙️ Chế độ bơm Chỉ số &amp; VT/CT vào Biên bản:</span>
+                    <label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-weight:600; color:#0f172a;">
+                        <input type="radio" name="cheDoBomBB" value="thuc_te" checked style="accent-color:#00338d;">
+                        Thực tế từng file (Mặc định)
+                    </label>
+                    <label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-weight:600; color:#0369a1;">
+                        <input type="radio" name="cheDoBomBB" value="theo_truoc" style="accent-color:#0369a1;">
+                        Đồng bộ cả 2 mục theo TRƯỚC cài
+                    </label>
+                    <label style="cursor:pointer; display:inline-flex; align-items:center; gap:5px; font-weight:600; color:#15803d;">
+                        <input type="radio" name="cheDoBomBB" value="theo_sau" style="accent-color:#15803d;">
+                        Đồng bộ cả 2 mục theo SAU cài
+                    </label>
+                </div>
+                <div style="display:inline-flex; align-items:center; gap:8px;">
+                    <input type="file" id="wordTemplateInput" accept=".docx" style="display:none;" onchange="handleWordTemplateUpload(event)">
+                    <span id="wordTemplateStatus" style="font-size:12px; color:#475569;">📄 Mẫu: <b>Mặc định (GitHub)</b></span>
+                    <button type="button" onclick="document.getElementById('wordTemplateInput').click()" style="background:#ffffff; color:#00338d; border:1px solid #94a3b8; border-radius:6px; padding:4px 10px; font-size:12px; font-weight:600; cursor:pointer;">
+                        📂 Đổi mẫu (.docx)
+                    </button>
+                </div>
+            </div>
+
             <!-- NÚT XUẤT BIÊN BẢN WORD & EXCEL -->
             <div class="export-bar">
                 <button id="btnWord" class="btn-action btn-word" onclick="xuatWordHangLoat()">
@@ -1302,15 +1328,26 @@ async function handleExcelUpload(e, statusId) {
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
+    // Dùng raw: false để giữ nguyên văn bản và số 0 đầu của SERIAL, MA_KH, TEM...
+    const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: "", raw: false });
     dictExcelCMIS = {};
-    rows.forEach(r => {
-        if (r.SERIAL !== undefined) {
-            let sKey = String(r.SERIAL).trim().padStart(12, '0');
-            dictExcelCMIS[sKey] = r;
+    let countKH = 0;
+    rows.forEach(rawRow => {
+        let r = {};
+        for (let [k, v] of Object.entries(rawRow)) {
+            r[String(k).trim().toUpperCase()] = String(v ?? "").trim();
+        }
+        let serRaw = r.SERIAL || "";
+        if (serRaw) {
+            let sPad = serRaw.padStart(12, '0');
+            let sNoZero = serRaw.replace(/^0+/, '') || '0';
+            dictExcelCMIS[sPad] = r;
+            dictExcelCMIS[serRaw] = r;
+            dictExcelCMIS[sNoZero] = r;
+            countKH++;
         }
     });
-    document.getElementById(statusId).innerHTML = `✅ Đã đồng bộ <b>${Object.keys(dictExcelCMIS).length} khách hàng</b> từ Excel`;
+    document.getElementById(statusId).innerHTML = `✅ Đã đồng bộ <b>${countKH} khách hàng</b> từ Excel`;
     await runFullProcess();
 }
 
@@ -1709,86 +1746,236 @@ function xuatExcelTongHop() {
     XLSX.writeFile(wb, "Bao_Cao_Tong_Hop_Doi_Soat.xlsx");
 }
 
+let customWordTemplateBuffer = null;
+
+async function handleWordTemplateUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    customWordTemplateBuffer = await file.arrayBuffer();
+    const st = document.getElementById('wordTemplateStatus');
+    if (st) st.innerHTML = `📄 Mẫu riêng: <b style="color:#15803d;">${file.name}</b>`;
+}
+
+function escapeXmlWord(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
+function taiFileAnToan(blob, fileName) {
+    if (typeof saveAs === 'function') {
+        saveAs(blob, fileName);
+    } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    }
+}
+
+function timKhachHangCMIS(serial) {
+    if (typeof dictExcelCMIS !== 'object' || !dictExcelCMIS || !serial) return {};
+    let sRaw = String(serial).trim();
+    let sPad = sRaw.padStart(12, '0');
+    let sNoZero = sRaw.replace(/^0+/, '') || '0';
+    return dictExcelCMIS[sPad] || dictExcelCMIS[sRaw] || dictExcelCMIS[sNoZero] || {};
+}
+
 async function xuatWordHangLoat() {
+    const btnWord = document.getElementById('btnWord');
+    const oldBtnText = btnWord ? btnWord.innerHTML : '';
     try {
-        const res = await fetch("./Mau_Bien_Ban.docx");
-        if (!res.ok) {
-            alert("Không tìm thấy file Mau_Bien_Ban.docx cùng thư mục trên GitHub!");
+        if (!Array.isArray(banGhiHoanThien) || banGhiHoanThien.length === 0) {
+            alert("Anh chưa nạp file PDF công tơ nào để xuất Biên bản!");
             return;
         }
-        const templateBuffer = await res.arrayBuffer();
-        const serials = [...new Set(banGhiHoanThien.map(x => x.serial).filter(s => s && s !== "N/A"))];
-        let wordFiles = [];
+        if (typeof PizZip === 'undefined') {
+            alert("Thiếu thư viện PizZip (kiểm tra kết nối mạng rồi bấm Ctrl + F5 tải lại trang)!");
+            return;
+        }
 
-        for (let s of serials) {
-            let group = banGhiHoanThien.filter(x => x.serial === s);
+        if (btnWord) { btnWord.disabled = true; btnWord.innerHTML = "⏳ Đang tạo Biên bản Word..."; }
+
+        // 1. Nạp mẫu Word (Ưu tiên mẫu riêng từ máy nếu anh đã chọn, mặc định tải từ GitHub có chống cache)
+        let templateBuffer = customWordTemplateBuffer;
+        if (!templateBuffer) {
+            try {
+                const res = await fetch(`./Mau_Bien_Ban.docx?t=${Date.now()}`, { cache: "no-store" });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                templateBuffer = await res.arrayBuffer();
+            } catch (fetchErr) {
+                alert(
+                    "Không tự tải được file Mau_Bien_Ban.docx (lỗi: " + fetchErr.message + ").\n\n" +
+                    "👉 Nếu anh đang mở web trên GitHub Pages: Kiểm tra xem đã tải file Mau_Bien_Ban.docx đúng tên lên cùng thư mục với index.html chưa.\n" +
+                    "👉 Nếu anh đang mở thử file trực tiếp từ máy tính (offline): Hãy bấm nút '📂 Đổi mẫu (.docx)' ngay phía trên để chọn file Mau_Bien_Ban.docx từ máy nhé!"
+                );
+                return;
+            }
+        }
+
+        // 2. Lấy chế độ bơm Chỉ số & VT/CT đang được chọn
+        const radioChecked = document.querySelector('input[name="cheDoBomBB"]:checked');
+        const cheDo = radioChecked ? radioChecked.value : "thuc_te";
+
+        // 3. Gom nhóm cặp TRƯỚC / SAU theo số Serial (khớp thông minh kể cả lệch số 0 đầu)
+        const groupMap = new Map();
+        for (let rec of banGhiHoanThien) {
+            if (!rec.serial || rec.serial === "N/A") continue;
+            let normKey = String(rec.serial).trim().replace(/^0+/, '') || '0';
+            if (!groupMap.has(normKey)) groupMap.set(normKey, []);
+            groupMap.get(normKey).push(rec);
+        }
+
+        const fmtNum = (n) => (typeof n === 'number' && !isNaN(n)) ? n.toLocaleString('en-US') : '0';
+        let wordFiles = [];
+        let dsThieuCap = [];
+        let dsThieuExcel = [];
+        const daNapExcel = (typeof dictExcelCMIS === 'object' && dictExcelCMIS && Object.keys(dictExcelCMIS).length > 0);
+
+        for (let [normKey, group] of groupMap.entries()) {
             let dTr = group.find(x => x.giai_doan === "TRƯỚC");
             let dSa = group.find(x => x.giai_doan === "SAU");
-            if (dTr && dSa) {
-                const zip = new PizZip(templateBuffer);
-                let xml = zip.file("word/document.xml").asText();
-                const rep = {
-                    "{{serial}}": String(dTr.serial),
-                    "{{tu_ti}}": `${dTr.tu}/${dTr.ti}`,
-                    "{{sl_tr}}": String(dTr.lan_cai_dat),
-                    "{{ngay_tr}}": String(dTr.ngay_lap_trinh),
-                    "{{p_giao_tr}}": dTr.p_giao.toLocaleString('en-US'),
-                    "{{b1_giao_tr}}": dTr.b1_giao.toLocaleString('en-US'),
-                    "{{b2_giao_tr}}": dTr.b2_giao.toLocaleString('en-US'),
-                    "{{b3_giao_tr}}": dTr.b3_giao.toLocaleString('en-US'),
-                    "{{p_nhan_tr}}": dTr.p_nhan.toLocaleString('en-US'),
-                    "{{b1_nhan_tr}}": dTr.b1_nhan.toLocaleString('en-US'),
-                    "{{b2_nhan_tr}}": dTr.b2_nhan.toLocaleString('en-US'),
-                    "{{b3_nhan_tr}}": dTr.b3_nhan.toLocaleString('en-US'),
-                    "{{q_giao_tr}}": dTr.q_giao.toLocaleString('en-US'),
-                    "{{q_nhan_tr}}": dTr.q_nhan.toLocaleString('en-US'),
-                    "{{sl_sa}}": String(dSa.lan_cai_dat),
-                    "{{ngay_sa}}": String(dSa.ngay_lap_trinh),
-                    "{{p_giao_sa}}": dSa.p_giao.toLocaleString('en-US'),
-                    "{{b1_giao_sa}}": dSa.b1_giao.toLocaleString('en-US'),
-                    "{{b2_giao_sa}}": dSa.b2_giao.toLocaleString('en-US'),
-                    "{{b3_giao_sa}}": dSa.b3_giao.toLocaleString('en-US'),
-                    "{{p_nhan_sa}}": dSa.p_nhan.toLocaleString('en-US'),
-                    "{{b1_nhan_sa}}": dSa.b1_nhan.toLocaleString('en-US'),
-                    "{{b2_nhan_sa}}": dSa.b2_nhan.toLocaleString('en-US'),
-                    "{{b3_nhan_sa}}": dSa.b3_nhan.toLocaleString('en-US'),
-                    "{{q_giao_sa}}": dSa.q_giao.toLocaleString('en-US'),
-                    "{{q_nhan_sa}}": dSa.q_nhan.toLocaleString('en-US'),
-                    "{{TEN_KH}}": String(dTr.TEN_KH || '..............................'),
-                    "{{DIA_CHI}}": String(dTr.DIA_CHI || '..............................'),
-                    "{{NUOC_SX}}": String(dTr.NUOC_SX || '.......'),
-                    "{{K}}": String(dTr.K || '.......'),
-                    "{{LOAI_CT}}": String(dTr.LOAI_CT || '.......'),
-                    "{{CAP_CX}}": String(dTr.CAP_CX || '.......'),
-                    "{{HE_SO}}": String(dTr.HE_SO || '.......'),
-                    "{{TEN_CNQL}}": String(dTr.TEN_CNQL || '.........................')
-                };
-                for (let [k, v] of Object.entries(rep)) {
-                    xml = xml.split(k).join(v);
-                }
-                zip.file("word/document.xml", xml);
-                const outBlob = zip.generate({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-                wordFiles.push({ serial: s, blob: outBlob });
+            if (!dTr || !dSa) {
+                dsThieuCap.push(group[0].serial);
+                continue;
             }
+
+            // Chọn nguồn chỉ số & VT/CT cho Mục I (srcTr) và Mục II (srcSa) theo 3 chế độ
+            let srcTr = (cheDo === "theo_sau") ? dSa : dTr;
+            let srcSa = (cheDo === "theo_truoc") ? dTr : dSa;
+
+            // Tra cứu đủ 12 cột thông tin từ Excel CMIS (bảo toàn số 0 đầu)
+            let serialHienThi = String(dSa.serial || dTr.serial).trim();
+            let kh = timKhachHangCMIS(serialHienThi);
+            if (daNapExcel && !kh.SERIAL && !kh.TEN_KH) {
+                dsThieuExcel.push(serialHienThi);
+            }
+            const getKH = (field, fallback) => {
+                let val = kh[field] || dTr[field] || dSa[field] || '';
+                return String(val).trim() || fallback;
+            };
+
+            const zip = new PizZip(templateBuffer);
+            let xml = zip.file("word/document.xml").asText();
+
+            // Tự động hàn gắn lại các thẻ {{...}} nếu lỡ bị Word chẻ đôi XML khi chỉnh sửa sau này
+            xml = xml.replace(/\{(?:<[^>]+>)*\{(?:<[^>]+>|[^{}])*?\}(?:<[^>]+>)*\}/g, (match) => {
+                if (match.includes('</w:p>')) return match;
+                const plain = match.replace(/<[^>]+>/g, '');
+                return /^\{\{[A-Za-z0-9_]+\}\}$/.test(plain) ? plain : match;
+            });
+
+            const rep = {
+                // Thông tin khách hàng & công tơ (đủ 12 cột Excel CMIS)
+                "{{MA_KH}}": getKH('MA_KH', '........................'),
+                "{{TEN_KH}}": getKH('TEN_KH', '..................................................'),
+                "{{DIA_CHI}}": getKH('DIA_CHI', '..................................................'),
+                "{{serial}}": serialHienThi,
+                "{{NUOC_SX}}": getKH('NUOC_SX', '..........'),
+                "{{K}}": getKH('K', '.......'),
+                "{{LOAI_CT}}": getKH('LOAI_CT', dTr.ten_cong_to || '..........'),
+                "{{CAP_CX}}": getKH('CAP_CX', '.....'),
+                "{{HE_SO}}": getKH('HE_SO', '.....'),
+                "{{TEM_TRUOC}}": getKH('TEM_TRUOC', '........................'),
+                "{{TEM_SAU}}": getKH('TEM_SAU', '........................'),
+                "{{TEN_CNQL}}": getKH('TEN_CNQL', ''),
+
+                // Mục I: Thông số công tơ TRƯỚC khi cài đặt (chỉ số & VT/CT lấy theo srcTr; SL/Ngày luôn giữ của dTr)
+                "{{p_giao_tr}}": fmtNum(srcTr.p_giao),
+                "{{b1_giao_tr}}": fmtNum(srcTr.b1_giao),
+                "{{b2_giao_tr}}": fmtNum(srcTr.b2_giao),
+                "{{b3_giao_tr}}": fmtNum(srcTr.b3_giao),
+                "{{p_nhan_tr}}": fmtNum(srcTr.p_nhan),
+                "{{b1_nhan_tr}}": fmtNum(srcTr.b1_nhan),
+                "{{b2_nhan_tr}}": fmtNum(srcTr.b2_nhan),
+                "{{b3_nhan_tr}}": fmtNum(srcTr.b3_nhan),
+                "{{q_giao_tr}}": fmtNum(srcTr.q_giao),
+                "{{q_nhan_tr}}": fmtNum(srcTr.q_nhan),
+                "{{tu_tr}}": String(srcTr.tu ?? '1.0'),
+                "{{ti_tr}}": String(srcTr.ti ?? '1.0'),
+                "{{sl_tr}}": String(dTr.lan_cai_dat ?? ''),
+                "{{ngay_tr}}": String(dTr.ngay_lap_trinh ?? ''),
+
+                // Mục II: Thông số công tơ SAU khi cài đặt (chỉ số & VT/CT lấy theo srcSa; SL/Ngày luôn giữ của dSa)
+                "{{p_giao_sa}}": fmtNum(srcSa.p_giao),
+                "{{b1_giao_sa}}": fmtNum(srcSa.b1_giao),
+                "{{b2_giao_sa}}": fmtNum(srcSa.b2_giao),
+                "{{b3_giao_sa}}": fmtNum(srcSa.b3_giao),
+                "{{p_nhan_sa}}": fmtNum(srcSa.p_nhan),
+                "{{b1_nhan_sa}}": fmtNum(srcSa.b1_nhan),
+                "{{b2_nhan_sa}}": fmtNum(srcSa.b2_nhan),
+                "{{b3_nhan_sa}}": fmtNum(srcSa.b3_nhan),
+                "{{q_giao_sa}}": fmtNum(srcSa.q_giao),
+                "{{q_nhan_sa}}": fmtNum(srcSa.q_nhan),
+                "{{tu_sa}}": String(srcSa.tu ?? '1.0'),
+                "{{ti_sa}}": String(srcSa.ti ?? '1.0'),
+                "{{sl_sa}}": String(dSa.lan_cai_dat ?? ''),
+                "{{ngay_sa}}": String(dSa.ngay_lap_trinh ?? ''),
+
+                // Dự phòng tương thích nếu mở mẫu Word cũ còn thẻ {{tu_ti}}
+                "{{tu_ti}}": `${srcTr.tu ?? '1.0'}/${srcTr.ti ?? '1.0'}`
+            };
+
+            for (let [k, v] of Object.entries(rep)) {
+                xml = xml.split(k).join(escapeXmlWord(v));
+            }
+            zip.file("word/document.xml", xml);
+
+            // Tạo dữ liệu Uint8Array chuẩn cho cả tải lẻ và nén ZIP
+            const u8 = zip.generate({ type: "uint8array", compression: "DEFLATE" });
+            let maKhSafe = String(kh.MA_KH || '').replace(/[\\/:*?"<>|]/g, '').trim();
+            let serSafe = serialHienThi.replace(/[\\/:*?"<>|]/g, '').trim();
+            let tenFileWord = maKhSafe ? `BB_${maKhSafe}_${serSafe}.docx` : `Bien_Ban_Cong_To_${serSafe}.docx`;
+
+            wordFiles.push({ fileName: tenFileWord, data: u8 });
         }
 
         if (wordFiles.length === 0) {
-            alert("Chưa có cặp file TRƯỚC và SAU nào cùng Serial để xuất Biên bản Word!");
+            alert("Chưa có cặp công tơ nào đủ cả file TRƯỚC và file SAU cùng Serial để xuất Biên bản Word!");
             return;
         }
+
+        // 4. Xuất 1 file .docx lẻ hoặc đóng gói .zip tách riêng từng file .docx
         if (wordFiles.length === 1) {
-            saveAs(wordFiles[0].blob, `Bien_Ban_Doi_Soat_${wordFiles[0].serial}.docx`);
+            const singleBlob = new Blob([wordFiles[0].data], {
+                type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            });
+            taiFileAnToan(singleBlob, wordFiles[0].fileName);
         } else {
             const masterZip = new PizZip();
             for (let wf of wordFiles) {
-                const arrBuf = await wf.blob.arrayBuffer();
-                masterZip.file(`Bien_Ban_Cong_To_${wf.serial}.docx`, arrBuf);
+                masterZip.file(wf.fileName, wf.data);
             }
-            const zipBlob = masterZip.generate({ type: "blob" });
-            saveAs(zipBlob, "Tron_Bo_Bien_Ban_Doi_Soat.zip");
+            const zipBlob = masterZip.generate({
+                type: "blob",
+                mimeType: "application/zip",
+                compression: "DEFLATE"
+            });
+            taiFileAnToan(zipBlob, `Tron_Bo_Bien_Ban_TT60_${wordFiles.length}_CongTo.zip`);
+        }
+
+        // 5. Nhắc nhẹ nếu có công tơ thiếu cặp hoặc chưa có trong Excel CMIS
+        let ghiChu = [];
+        if (dsThieuCap.length > 0) {
+            ghiChu.push(`- Bỏ qua ${dsThieuCap.length} công tơ do thiếu 1 trong 2 file TRƯỚC/SAU: ${dsThieuCap.join(', ')}`);
+        }
+        if (dsThieuExcel.length > 0) {
+            ghiChu.push(`- Có ${dsThieuExcel.length} công tơ chưa tìm thấy trong file Excel CMIS: ${dsThieuExcel.join(', ')}`);
+        }
+        if (ghiChu.length > 0) {
+            alert(`✅ Đã xuất thành công ${wordFiles.length} biên bản!\n\n⚠️ Lưu ý rà soát:\n${ghiChu.join('\n')}`);
         }
     } catch (e) {
-        alert("Lỗi khi tạo Biên bản Word: " + e.message);
+        alert("Lỗi khi tạo Biên bản Word: " + (e && e.message ? e.message : e));
+        console.error(e);
+    } finally {
+        if (btnWord) { btnWord.disabled = false; btnWord.innerHTML = oldBtnText; }
     }
 }
 </script>
