@@ -1675,8 +1675,8 @@ function chayRadarQC() {
         let dSa = files.find(x => x.giai_doan === "SAU");
 
         if (dTr && dSa) {
-            let tenLoai = String(dSa.ten_cong_to || dTr.ten_cong_to || "").toUpperCase();
-            let isGelex = tenLoai.includes("GELEX") || tenLoai.includes("GLX");
+            let tenLoai = String(dSa.ten_cong_to || dTr.ten_cong_to || dSa.LOAI_CT || dTr.LOAI_CT || "").toUpperCase();
+            let isGelex = /GELEX|GLX|EMIC|ME[\-\s]?4\d|305/.test(tenLoai) || (document.getElementById('loaiCongTo')?.value === "GELEX");
             let nguongToiDa = isGelex ? 10 : 1;
             if (dSa.lan_cai_dat > dTr.lan_cai_dat + nguongToiDa) {
                 canhBao.push(`🔍 <b>Công tơ ${s}:</b> Số lần lập trình tăng bất thường (File trước cài: ${dTr.lan_cai_dat} ➡️ File sau cài: ${dSa.lan_cai_dat}).`);
